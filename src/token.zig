@@ -35,6 +35,10 @@ pub fn is_letter(ch: u8) bool {
     return ('a' <= ch and ch <= 'z') or ('A' <= ch and ch <= 'Z') or ch == '_';
 }
 
+pub fn is_digit(ch: u8) bool {
+    return '0' <= ch and ch <= '9';
+}
+
 pub fn lookup_ident(ident: []const u8) TokenType {
     if (mem.eql(u8, ident, "fn")) {
         return TokenType.Function;

@@ -1,6 +1,7 @@
 const std = @import("std");
 const mem = std.mem;
 const testing = std.testing;
+const debug = std.debug;
 
 const token = @import("token.zig");
 const Token = token.Token;
@@ -35,26 +36,50 @@ pub const Lexer = struct {
     }
 
     pub fn next_token(self: *Lexer) Token {
-        const tok: Token = switch (self.ch) {
-            '=' => Token.init(TokenType.Assign, "="),
-            '+' => Token.init(TokenType.Plus, "+"),
-            '(' => Token.init(TokenType.LParen, "("),
-            ')' => Token.init(TokenType.RParen, ")"),
-            '{' => Token.init(TokenType.LBrace, "{"),
-            '}' => Token.init(TokenType.RBrace, "}"),
-            ',' => Token.init(TokenType.Comma, ","),
-            ';' => Token.init(TokenType.Semicolon, ";"),
-            0 => Token.init(TokenType.Eof, ""),
+        var tok: Token = undefined;
+        self.skip_whitespace();
+        switch (self.ch) {
+            '=' => {
+                tok = Token.init(TokenType.Assign, "=");
+            },
+            '+' => {
+                tok = Token.init(TokenType.Plus, "+");
+            },
+            '(' => {
+                tok = Token.init(TokenType.LParen, "(");
+            },
+            ')' => {
+                tok = Token.init(TokenType.RParen, ")");
+            },
+            '{' => {
+                tok = Token.init(TokenType.LBrace, "{");
+            },
+            '}' => {
+                tok = Token.init(TokenType.RBrace, "}");
+            },
+            ',' => {
+                tok = Token.init(TokenType.Comma, ",");
+            },
+            ';' => {
+                tok = Token.init(TokenType.Semicolon, ";");
+            },
+            0 => {
+                tok = Token.init(TokenType.Eof, "");
+            },
             else => {
                 if (token.is_letter(self.ch)) {
-                    var tok = Token{ .t = undefined, .literal = undefined };
+                    tok = Token{ .t = undefined, .literal = undefined };
                     tok.literal = self.read_identifier();
                     tok.t = token.lookup_ident(tok.literal);
                     return tok;
+                } else if (token.is_digit(self.ch)) {
+                    return Token.init(TokenType.Int, self.read_number());
+                } else {
+                    tok = Token.init(TokenType.Illegal, "");
                 }
-                return Token.init(TokenType.Illegal, "");
             },
-        };
+        }
+        self.read_char();
         return tok;
     }
 
@@ -64,6 +89,20 @@ pub const Lexer = struct {
             self.read_char();
         }
         return self.input[position..self.position];
+    }
+
+    pub fn read_number(self: *Lexer) []const u8 {
+        var position = self.position;
+        while (token.is_digit(self.ch)) {
+            self.read_char();
+        }
+        return self.input[position..self.position];
+    }
+
+    pub fn skip_whitespace(self: *Lexer) void {
+        while (self.ch == ' ' or self.ch == '\t' or self.ch == '\n' or self.ch == '\r') {
+            self.read_char();
+        }
     }
 };
 
@@ -124,6 +163,8 @@ test "lexer: simple program" {
         Token.init(TokenType.Ident, "x"),
         Token.init(TokenType.Plus, "+"),
         Token.init(TokenType.Ident, "y"),
+        Token.init(TokenType.Semicolon, ";"),
+        Token.init(TokenType.RBrace, "}"),
         Token.init(TokenType.Semicolon, ";"),
         // let result = add(five, ten);
         Token.init(TokenType.Let, "let"),

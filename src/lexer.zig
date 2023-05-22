@@ -42,57 +42,57 @@ pub const Lexer = struct {
             '=' => {
                 if (self.peek_char() == '=') {
                     self.read_char();
-                    tok = Token.init(TokenType.EqualEqual, "==");
+                    tok = Token.init(.equal_equal, "==");
                 } else {
-                    tok = Token.init(TokenType.Assign, "=");
+                    tok = Token.init(.assign, "=");
                 }
             },
             '+' => {
-                tok = Token.init(TokenType.Plus, "+");
+                tok = Token.init(.plus, "+");
             },
             '(' => {
-                tok = Token.init(TokenType.LParen, "(");
+                tok = Token.init(.l_paren, "(");
             },
             ')' => {
-                tok = Token.init(TokenType.RParen, ")");
+                tok = Token.init(.r_paren, ")");
             },
             '{' => {
-                tok = Token.init(TokenType.LBrace, "{");
+                tok = Token.init(.l_brace, "{");
             },
             '}' => {
-                tok = Token.init(TokenType.RBrace, "}");
+                tok = Token.init(.r_brace, "}");
             },
             ',' => {
-                tok = Token.init(TokenType.Comma, ",");
+                tok = Token.init(.comma, ",");
             },
             ';' => {
-                tok = Token.init(TokenType.Semicolon, ";");
+                tok = Token.init(.semicolon, ";");
             },
             '-' => {
-                tok = Token.init(TokenType.Minus, "-");
+                tok = Token.init(.minus, "-");
             },
             '!' => {
                 if (self.peek_char() == '=') {
                     self.read_char();
-                    tok = Token.init(TokenType.NotEqual, "!=");
+                    tok = Token.init(.not_equal, "!=");
                 } else {
-                    tok = Token.init(TokenType.Bang, "!");
+                    tok = Token.init(.bang, "!");
                 }
             },
             '*' => {
-                tok = Token.init(TokenType.Asterisk, "*");
+                tok = Token.init(.asterisk, "*");
             },
             '/' => {
-                tok = Token.init(TokenType.Slash, "/");
+                tok = Token.init(.slash, "/");
             },
             '<' => {
-                tok = Token.init(TokenType.LessThan, "<");
+                tok = Token.init(.less_than, "<");
             },
             '>' => {
-                tok = Token.init(TokenType.GreaterThan, ">");
+                tok = Token.init(.greater_than, ">");
             },
             0 => {
-                tok = Token.init(TokenType.Eof, "");
+                tok = Token.init(.eof, "");
             },
             else => {
                 if (token.is_letter(self.ch)) {
@@ -101,9 +101,9 @@ pub const Lexer = struct {
                     tok.t = token.lookup_keywords(tok.literal);
                     return tok;
                 } else if (token.is_digit(self.ch)) {
-                    return Token.init(TokenType.Int, self.read_number());
+                    return Token.init(.int, self.read_number());
                 } else {
-                    tok = Token.init(TokenType.Illegal, "");
+                    tok = Token.init(.illegal, "");
                 }
             },
         }

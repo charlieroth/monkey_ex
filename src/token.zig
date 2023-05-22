@@ -2,39 +2,39 @@ const std = @import("std");
 const mem = std.mem;
 
 pub const TokenType = enum {
-    Illegal,
-    Eof,
+    illegal,
+    eof,
     // Identifiers
-    ReadIdent,
-    Ident,
+    read_ident,
+    ident,
     // Types
-    Int,
+    int,
     // Operators
-    Assign,
-    Plus,
-    Minus,
-    Bang,
-    Asterisk,
-    Slash,
-    LessThan,
-    GreaterThan,
-    EqualEqual,
-    NotEqual,
+    assign,
+    plus,
+    minus,
+    bang,
+    asterisk,
+    slash,
+    less_than,
+    greater_than,
+    equal_equal,
+    not_equal,
     // Syntax
-    Comma,
-    Semicolon,
-    LParen,
-    RParen,
-    LBrace,
-    RBrace,
+    comma,
+    semicolon,
+    l_paren,
+    r_paren,
+    l_brace,
+    r_brace,
     // Keywords
-    Let,
-    If,
-    Else,
-    Function,
-    Return,
-    True,
-    False,
+    let,
+    _if,
+    _else,
+    function,
+    _return,
+    _true,
+    _false,
 };
 
 pub const Token = struct {
@@ -59,20 +59,20 @@ pub fn is_digit(ch: u8) bool {
 
 pub fn lookup_keywords(keyword: []const u8) TokenType {
     if (mem.eql(u8, keyword, "let")) {
-        return TokenType.Let;
+        return .let;
     } else if (mem.eql(u8, keyword, "fn")) {
-        return TokenType.Function;
+        return .function;
     } else if (mem.eql(u8, keyword, "return")) {
-        return TokenType.Return;
+        return ._return;
     } else if (mem.eql(u8, keyword, "if")) {
-        return TokenType.If;
+        return ._if;
     } else if (mem.eql(u8, keyword, "else")) {
-        return TokenType.Else;
+        return ._else;
     } else if (mem.eql(u8, keyword, "true")) {
-        return TokenType.True;
+        return ._true;
     } else if (mem.eql(u8, keyword, "false")) {
-        return TokenType.False;
+        return ._false;
     } else {
-        return TokenType.Ident;
+        return .ident;
     }
 }

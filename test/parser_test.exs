@@ -78,9 +78,6 @@ defmodule ParserTest do
         |> Parser.parse([])
 
       assert length(parser.errors) == 1
-      # assert parser.current_token == %Token{type: :eof, literal: ""}
-      # assert parser.peek_token == nil
-      # assert length(program.statements) == 2
     end
 
     test "parses return statements" do

@@ -1,8 +1,8 @@
 defmodule LexerTest do
   use ExUnit.Case
 
-  alias Lexer
-  alias Token
+  alias Mirlang.Lexer
+  alias Mirlang.Token
 
   describe "lex/1" do
     test "tokenizes simple set of syntax symbols" do
@@ -141,13 +141,13 @@ defmodule LexerTest do
                %Token{type: :rparen, literal: ")"},
                %Token{type: :lbrace, literal: "{"},
                %Token{type: :return, literal: "return"},
-               %Token{type: :true, literal: "true"},
+               %Token{type: true, literal: "true"},
                %Token{type: :semicolon, literal: ";"},
                %Token{type: :rbrace, literal: "}"},
                %Token{type: :else, literal: "else"},
                %Token{type: :lbrace, literal: "{"},
                %Token{type: :return, literal: "return"},
-               %Token{type: :false, literal: "false"},
+               %Token{type: false, literal: "false"},
                %Token{type: :semicolon, literal: ";"},
                %Token{type: :rbrace, literal: "}"},
                %Token{type: :eof, literal: ""}
@@ -170,6 +170,32 @@ defmodule LexerTest do
                %Token{type: :int, literal: "11"},
                %Token{type: :not_equal, literal: "!="},
                %Token{type: :int, literal: "10"},
+               %Token{type: :semicolon, literal: ";"},
+               %Token{type: :eof, literal: ""}
+             ]
+    end
+
+    test "tokenizes return statements" do
+      input = """
+      return 5;
+      return 10;
+      return add(15);
+      """
+
+      result = input |> Lexer.lex()
+
+      assert result == [
+               %Token{type: :return, literal: "return"},
+               %Token{type: :int, literal: "5"},
+               %Token{type: :semicolon, literal: ";"},
+               %Token{type: :return, literal: "return"},
+               %Token{type: :int, literal: "10"},
+               %Token{type: :semicolon, literal: ";"},
+               %Token{type: :return, literal: "return"},
+               %Token{type: :ident, literal: "add"},
+               %Token{type: :lparen, literal: "("},
+               %Token{type: :int, literal: "15"},
+               %Token{type: :rparen, literal: ")"},
                %Token{type: :semicolon, literal: ";"},
                %Token{type: :eof, literal: ""}
              ]

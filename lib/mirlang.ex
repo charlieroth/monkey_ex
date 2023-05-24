@@ -3,8 +3,8 @@ defmodule Mirlang do
   Mirlang module is the entry point for the Mirlang interpreter.
   """
 
-  alias Parser
-  alias Lexer
+  alias Mirlang.Parser
+  alias Mirlang.Lexer
 
   def run(input) do
     input

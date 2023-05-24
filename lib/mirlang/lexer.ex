@@ -1,6 +1,6 @@
 defmodule Mirlang.Lexer do
   @moduledoc false
-  alias Token
+  alias Mirlang.Token
 
   def lex(input) do
     input
@@ -18,6 +18,7 @@ defmodule Mirlang.Lexer do
       is_letter(ch) -> read_identifier(chars, tokens)
       is_digit(ch) -> read_number(chars, tokens)
       is_op(chars) -> read_op(chars, tokens)
+      is_return(chars) -> read_return(chars, tokens)
       true -> read_next(chars, tokens)
     end
   end
@@ -39,11 +40,20 @@ defmodule Mirlang.Lexer do
   def read_op(chars, tokens) do
     {op, rest} = Enum.split(chars, 2)
     op = Enum.join(op)
+
     token =
       case op do
-        "==" ->  Token.new(:equal_equal, op)
-        "!=" ->  Token.new(:not_equal, op)
+        "==" -> Token.new(:equal_equal, op)
+        "!=" -> Token.new(:not_equal, op)
       end
+
+    tokenize(rest, [token | tokens])
+  end
+
+  def read_return(chars, tokens) do
+    {ret, rest} = Enum.split(chars, 5)
+    ret = Enum.join(ret)
+    token = Token.new(:return, ret)
     tokenize(rest, [token | tokens])
   end
 
@@ -67,7 +77,7 @@ defmodule Mirlang.Lexer do
         _ -> Token.new(:illegal, "")
       end
 
-      tokenize(rest, [token | tokens])
+    tokenize(rest, [token | tokens])
   end
 
   def is_whitespace(ch) do
@@ -84,5 +94,11 @@ defmodule Mirlang.Lexer do
 
   def is_op(chars) do
     (Enum.at(chars, 0) == "!" || Enum.at(chars, 0) == "=") && Enum.at(chars, 1) == "="
+  end
+
+  def is_return(chars) do
+    {ret, _rest} = Enum.split(chars, 5)
+    ret = Enum.join(ret)
+    ret == "return"
   end
 end

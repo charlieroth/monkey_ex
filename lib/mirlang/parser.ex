@@ -1,37 +1,40 @@
 defmodule Mirlang.Parser do
-  @enforce_keys [:current_token, :peek_token, :tokens]
-  defstruct [:current_token, :peek_token, :tokens]
-
+  @enforce_keys [:tokens, :current_token, :peek_token, :errors]
+  defstruct [:tokens, :current_token, :peek_token, :errors]
 
   require Logger
 
   alias Mirlang.Parser
-  alias Token
+  alias Mirlang.Token
+
   alias Ast.{
     Program,
     LetStatement,
+    ReturnStatement,
     Identifier,
     IntegerLiteral
   }
 
-
   @type t :: %{
-    current_token: Token.t(),
-    peek_token: Token.t(),
-    tokens: list(Token.t())
-  }
+          tokens: list(Token.t()),
+          current_token: Token.t(),
+          peek_token: Token.t(),
+          errors: list(String.t())
+        }
 
   def from_tokens(tokens) do
     [current_token | [peek_token | rest]] = tokens
+
     %Parser{
       current_token: current_token,
       peek_token: peek_token,
-      tokens: rest
+      tokens: rest,
+      errors: []
     }
   end
 
   def parse(parser, statements) do
-    parse_program(parser, statements)
+    parser |> parse_program(statements)
   end
 
   def parse_program(%Parser{current_token: %Token{type: :eof}} = parser, statements) do
@@ -42,11 +45,13 @@ defmodule Mirlang.Parser do
 
   def parse_program(%Parser{} = parser, statements) do
     {parser, statement} = parse_statement(parser)
+
     statements =
       case statement do
         nil -> statements
         s -> [s | statements]
       end
+
     parser = parser |> next_token()
     parse_program(parser, statements)
   end
@@ -54,23 +59,34 @@ defmodule Mirlang.Parser do
   def parse_statement(parser) do
     case parser.current_token.type do
       :let -> parse_let_statement(parser)
+      :return -> parse_return_statement(parser)
       _ -> {parser, nil}
     end
   end
 
   def parse_let_statement(parser) do
     curr_token = parser.current_token
+
     with {:ok, parser, ident_token} <- expect_peek(parser, :ident),
          {:ok, parser, _assign_token} <- expect_peek(parser, :assign),
          parser <- parser |> next_token(),
          {:ok, parser, value} <- parse_expression(parser) do
-    identifier = %Identifier{token: ident_token, value: ident_token.literal}
-    statement = %LetStatement{token: curr_token, name: identifier, value: value}
+      identifier = %Identifier{token: ident_token, value: ident_token.literal}
+      statement = %LetStatement{token: curr_token, name: identifier, value: value}
+      parser = parser |> skip_semicolon()
+      {parser, statement}
+    else
+      {:error, parser, _} -> {parser, nil}
+    end
+  end
+
+  def parse_return_statement(parser) do
+    curr_token = parser.current_token
+    parser = parser |> next_token()
+    {_, parser, return_value} = parser |> parse_expression()
     parser = parser |> skip_semicolon()
+    statement = %ReturnStatement{token: curr_token, return_value: return_value}
     {parser, statement}
-         else
-           {:error, parser, _} -> {parser, nil}
-         end
   end
 
   def parse_expression(parser) do
@@ -91,8 +107,13 @@ defmodule Mirlang.Parser do
 
   def parse_int(parser) do
     number = Integer.parse(parser.current_token.literal)
+
     case number do
-      :error -> {:error, parser, nil}
+      :error ->
+        msg = "Failed to parse #{number} as integer literal"
+        parser = parser |> add_error(msg)
+        {parser, nil}
+
       {value, _} ->
         expression = %IntegerLiteral{token: parser.current_token, value: value}
         {parser, expression}
@@ -108,19 +129,12 @@ defmodule Mirlang.Parser do
   end
 
   def next_token(%Parser{tokens: []} = parser) do
-    %Parser{parser |
-      current_token: parser.peek_token,
-      peek_token: nil
-    }
+    %Parser{parser | current_token: parser.peek_token, peek_token: nil}
   end
 
   def next_token(%Parser{} = parser) do
     [next_peek_token | rest] = parser.tokens
-    %Parser{parser |
-      current_token: parser.peek_token,
-      peek_token: next_peek_token,
-      tokens: rest
-    }
+    %Parser{parser | current_token: parser.peek_token, peek_token: next_peek_token, tokens: rest}
   end
 
   def expect_peek(%Parser{peek_token: peek_token} = parser, expected_type) do
@@ -128,7 +142,13 @@ defmodule Mirlang.Parser do
       parser = parser |> next_token()
       {:ok, parser, peek_token}
     else
-      {:error, parser, "Expected token #{inspect(expected_type)}, got #{inspect(peek_token.type)}"}
+      msg = "Expected token #{inspect(expected_type)}, got #{inspect(peek_token.type)}"
+      parser = parser |> add_error(msg)
+      {:error, parser, msg}
     end
+  end
+
+  def add_error(%Parser{errors: errors} = parser, msg) do
+    %Parser{parser | errors: errors ++ [msg]}
   end
 end

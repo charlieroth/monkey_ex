@@ -1,11 +1,11 @@
-defmodule Token do
+defmodule Mirlang.Token do
   @enforce_keys [:type, :literal]
   defstruct [:type, :literal]
 
   @type t :: %{
-    type: atom(),
-    literal: binary()
-  }
+          type: atom(),
+          literal: binary()
+        }
 
   @keywords %{
     "fn" => :fn,

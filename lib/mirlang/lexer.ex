@@ -1,8 +1,7 @@
-defmodule Lexer do
+defmodule Mirlang.Lexer do
   @moduledoc false
   alias Token
 
-  @spec lex(input :: String.t()) :: list(Token) | {:error, term()}
   def lex(input) do
     input
     |> String.split("", trim: true)
@@ -36,7 +35,7 @@ defmodule Lexer do
     token = Token.new(:int, number)
     tokenize(rest, [token | tokens])
   end
-  
+
   def read_op(chars, tokens) do
     {op, rest} = Enum.split(chars, 2)
     op = Enum.join(op)
@@ -49,7 +48,7 @@ defmodule Lexer do
   end
 
   def read_next(_chars = [ch | rest], tokens) do
-    token = 
+    token =
       case ch do
         ";" -> Token.new(:semicolon, ch)
         "," -> Token.new(:comma, ch)
@@ -66,27 +65,23 @@ defmodule Lexer do
         ">" -> Token.new(:greater_than, ch)
         "<" -> Token.new(:less_than, ch)
         _ -> Token.new(:illegal, "")
-      end 
+      end
 
       tokenize(rest, [token | tokens])
   end
 
-  @spec is_whitespace(ch :: String.t()) :: boolean()
   def is_whitespace(ch) do
     ch == " " || ch == "\n" || ch == "\t"
   end
 
-  @spec is_letter(ch :: String.t()) :: boolean()
   def is_letter(ch) do
     ("a" <= ch && ch <= "z") || ("A" <= ch && ch <= "Z") || ch == "_"
   end
-  
-  @spec is_digit(ch :: String.t()) :: boolean()
+
   def is_digit(ch) do
     "0" <= ch && ch <= "9"
   end
-  
-  @spec is_op(chars :: list(String.t())) :: boolean()
+
   def is_op(chars) do
     (Enum.at(chars, 0) == "!" || Enum.at(chars, 0) == "=") && Enum.at(chars, 1) == "="
   end

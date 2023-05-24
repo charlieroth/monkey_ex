@@ -2,6 +2,11 @@ defmodule Token do
   @enforce_keys [:type, :literal]
   defstruct [:type, :literal]
 
+  @type t :: %{
+    type: atom(),
+    literal: binary()
+  }
+
   @keywords %{
     "fn" => :fn,
     "let" => :let,
@@ -46,7 +51,6 @@ defmodule Token do
     return: "RETURN"
   }
 
-  @spec new(type :: atom(), literal :: String.t()) :: %Token{} | no_return()
   def new(type, literal) when is_atom(type) and is_binary(literal) do
     if Map.has_key?(@types, type) do
       %__MODULE__{type: type, literal: literal}
@@ -55,7 +59,6 @@ defmodule Token do
     end
   end
 
-  @spec lookup_identifier(ident :: String.t()) :: String.t() | nil 
   def lookup_identifier(ident) do
     Map.get(@keywords, ident, :ident)
   end

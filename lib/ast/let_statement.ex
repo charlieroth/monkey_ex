@@ -25,7 +25,7 @@ defmodule Ast.LetStatement do
         Node.token_literal(let_statement),
         " ",
         Node.string(let_statement.name),
-        "="
+        " = "
       ]
 
       output =
@@ -34,6 +34,8 @@ defmodule Ast.LetStatement do
         else
           output
         end
+
+      output = output ++ [";"]
 
       Enum.join(output)
     end

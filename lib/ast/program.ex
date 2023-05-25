@@ -10,9 +10,11 @@ defmodule Ast.Program do
     statements: list(any())
   }
 
+  alias Ast.Node
+
   def string(program) do
     program.statements
-    |> Enum.map(fn statement -> statement.string() end)
+    |> Enum.map(&Node.string/1)
     |> Enum.join()
   end
 end

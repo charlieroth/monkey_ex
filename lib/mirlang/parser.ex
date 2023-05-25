@@ -12,7 +12,9 @@ defmodule Mirlang.Parser do
     LetStatement,
     ReturnStatement,
     Identifier,
-    IntegerLiteral
+    IntegerLiteral,
+    ExpressionStatement,
+    InfixExpression
   }
 
   @type t :: %{
@@ -21,6 +23,16 @@ defmodule Mirlang.Parser do
           peek_token: Token.t(),
           errors: list(String.t())
         }
+
+  @precedence %{
+    lowest: 0,
+    equals: 1,       # ==
+    less_greater: 2, # > or <
+    sum: 3,          # +
+    product: 4,      # *
+    prefix: 5,       # -X or !X
+    call: 6          # myFunc(X)
+  }
 
   def from_tokens(tokens) do
     [current_token | [peek_token | rest]] = tokens
@@ -60,7 +72,7 @@ defmodule Mirlang.Parser do
     case parser.current_token.type do
       :let -> parse_let_statement(parser)
       :return -> parse_return_statement(parser)
-      _ -> {parser, nil}
+      _ -> parse_expression_statement(parser)
     end
   end
 
@@ -70,7 +82,7 @@ defmodule Mirlang.Parser do
     with {:ok, parser, ident_token} <- expect_peek(parser, :ident),
          {:ok, parser, _assign_token} <- expect_peek(parser, :assign),
          parser <- parser |> next_token(),
-         {:ok, parser, value} <- parse_expression(parser) do
+         {:ok, parser, value} <- parse_expression(parser, @precedence.lowest) do
       identifier = %Identifier{token: ident_token, value: ident_token.literal}
       statement = %LetStatement{token: curr_token, name: identifier, value: value}
       parser = parser |> skip_semicolon()
@@ -83,25 +95,77 @@ defmodule Mirlang.Parser do
   def parse_return_statement(parser) do
     curr_token = parser.current_token
     parser = parser |> next_token()
-    {_, parser, return_value} = parser |> parse_expression()
+    {_, parser, return_value} = parse_expression(parser, @precedence.lowest)
     parser = parser |> skip_semicolon()
     statement = %ReturnStatement{token: curr_token, return_value: return_value}
     {parser, statement}
   end
 
-  def parse_expression(parser) do
-    case do_parse_expression(parser.current_token.type, parser) do
+  def parse_expression_statement(parser) do
+    curr_token = parser.current_token
+    {_, parser, expression} = parse_expression(parser, @precedence.lowest)
+    expression_statement = %ExpressionStatement{
+      token: curr_token,
+      expression: expression
+    }
+    {parser, expression_statement}
+  end
+
+  def parse_expression(parser, precedence) do
+    case prefix_parse_fns(parser.current_token.type, parser) do
       {parser, nil} -> {:error, parser, nil}
-      {parser, expression} -> {:ok, parser, expression}
+      {parser, expression} -> 
+        {parser, expression} = check_infix(parser, expression, precedence)
+        {:ok, parser, expression}
     end
   end
 
-  def do_parse_expression(:ident, parser), do: parse_identifier(parser)
-  def do_parse_expression(:int, parser), do: parse_int(parser)
-  def do_parse_expression(_, parser), do: {parser, nil}
+  def check_infix(parser, left_expression, precedence) do
+    next_not_semi = parser.peek_token.type != :semicolon
+    lower_precedence = precedence < peek_precedence(parser)
+    allowed = next_not_semi && lower_precedence 
+
+    with true <- allowed,
+         infix_fn <- infix_parse_fns(parser.peek_token.type),
+         true <- infix_fn != nil do
+      parser = parser |> next_token()
+      {parser, infix} = infix_fn.(parser, left_expression)
+      check_infix(parser, infix, precedence)
+    else
+      _ -> {parser, left_expression}
+    end
+  end
+
+  def prefix_parse_fns(:ident, parser), do: parse_identifier(parser)
+  def prefix_parse_fns(:int, parser), do: parse_int(parser)
+  def prefix_parse_fns(_, parser), do: {parser, nil}
+
+  def infix_parse_fns(:plus), do: &parse_infix_expression(&1, &2)
+  def infix_parse_fns(:minus), do: &parse_infix_expression(&1, &2)
+  def infix_parse_fns(:slash), do: &parse_infix_expression(&1, &2)
+  def infix_parse_fns(:asterisk), do: &parse_infix_expression(&1, &2)
+  def infix_parse_fns(_), do: nil 
+
+  def parse_infix_expression(parser, left_expression) do
+    curr_token = parser.curr_token
+    operator = parser.curr_token.literal
+    precedence = curr_precedence(parser)
+    parser = parser |> next_token()
+    {_, parser, right_expression} = parse_expression(parser, precedence)
+    infix_expression = %InfixExpression{
+      token: curr_token,
+      left: left_expression,
+      operator: operator,
+      right: right_expression
+    }
+    {parser, infix_expression}
+  end
 
   def parse_identifier(parser) do
-    expression = %Identifier{token: parser.current_token, value: parser.current_token.literal}
+    expression = %Identifier{
+      token: parser.current_token, 
+      value: parser.current_token.literal
+    }
     {parser, expression}
   end
 
@@ -150,5 +214,13 @@ defmodule Mirlang.Parser do
 
   def add_error(%Parser{errors: errors} = parser, msg) do
     %Parser{parser | errors: errors ++ [msg]}
+  end
+
+  def curr_precedence(parser) do
+    Map.get(@precedence, parser.curr_token.type, @precedence.lowest)
+  end
+  
+  def peek_precedence(parser) do
+    Map.get(@precedence, parser.peek_token.type, @precedence.lowest)
   end
 end

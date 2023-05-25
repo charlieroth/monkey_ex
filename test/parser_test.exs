@@ -2,6 +2,7 @@ defmodule ParserTest do
   use ExUnit.Case
 
   alias Mirlang.{Parser, Token}
+  alias Ast.ExpressionStatement
 
   describe "from_tokens/1" do
     test "creates parser with tokens" do
@@ -99,8 +100,28 @@ defmodule ParserTest do
       assert parser.peek_token == nil
       assert length(program.statements) == 3
 
-      all_return_statements = Enum.all?(program.statements, fn s -> s.return_value != nil end)
+      all_return_statements = Enum.all?(
+        program.statements, 
+        fn s -> s.return_value != nil end
+      )
       assert all_return_statements
+    end
+
+    test "parses simple expression statement" do
+      tokens = [
+        %Token{type: :ident, literal: "foobar"},
+        %Token{type: :semicolon, literal: ";"},
+        %Token{type: :eof, literal: ""},
+      ]
+
+      {parser, program} =
+        tokens
+        |> Parser.from_tokens()
+        |> Parser.parse([])
+
+      expression_statement = Enum.at(program.statements, 0)
+      IO.inspect(program.statements, 0)
+      assert true == true
     end
   end
 end

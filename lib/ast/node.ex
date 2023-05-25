@@ -10,5 +10,5 @@ defprotocol Ast.Node do
   def node_type(node)
 
   @doc "Returns the underlying value of the node"
-  def value(node)
+  def string(node)
 end

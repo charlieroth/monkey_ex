@@ -15,14 +15,10 @@ defmodule Ast.IntegerLiteral do
   defstruct [:token, :value]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(integer) do
-      integer.token.literal
-    end
+    def token_literal(integer), do: integer.token.literal
 
-    def node_type(_), do: :expression
+    def node_type(_node), do: :expression
 
-    def value(integer) do
-      integer.value
-    end
+    def string(integer), do: integer.value
   end
 end

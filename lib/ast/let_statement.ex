@@ -16,14 +16,26 @@ defmodule Ast.LetStatement do
   defstruct [:token, :name, :value]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(let_statement) do
-      let_statement.token.literal
-    end
+    def token_literal(let_statement), do: let_statement.token.literal
 
-    def node_type(_), do: :statement
+    def node_type(_node), do: :statement
 
-    def value(let_statement) do
-      let_statement.value
+    def string(let_statement) do
+      output = [
+        Node.token_literal(let_statement),
+        " ",
+        Node.string(let_statement.name),
+        "="
+      ]
+
+      output =
+        if let_statement.value do
+          output ++ [Node.string(let_statement.value)]
+        else
+          output
+        end
+
+      Enum.join(output)
     end
   end
 end

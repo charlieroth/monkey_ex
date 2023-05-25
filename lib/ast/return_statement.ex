@@ -17,14 +17,25 @@ defmodule Ast.ReturnStatement do
   defstruct [:token, :return_value]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(return_statement) do
-      return_statement.token.literal
-    end
+    def token_literal(return_statement), do: return_statement.token.literal
 
-    def node_type(_), do: :statement
+    def node_type(_node), do: :statement
 
-    def value(return_statement) do
-      return_statement.return_value
+    def string(return_statement) do
+      output = [
+        Node.token_literal(return_statement),
+        " ",
+      ]
+
+      output =
+        if return_statement.value do
+          output ++ [Node.string(return_statement.value)]
+        else
+          output
+        end
+
+      output = output ++ [";"] 
+      Enum.join(output)
     end
   end
 end

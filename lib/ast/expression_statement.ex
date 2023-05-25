@@ -5,20 +5,12 @@ defmodule Ast.ExpressionStatement do
   defstruct [:token, :expression]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(expression_statement) do
-      expression_statement.token.literal
-    end
+    def token_literal(expression_statement), do: expression_statement.token.literal
 
-    def node_type(_node) do
-      :statement
-    end
+    def node_type(_node), do: :statement
 
-    def value(%{expression: nil}) do
-      ""
-    end
+    def string(%{expression: nil}), do: ""
 
-    def value(expression_statement) do
-      Node.value(expression_statement.expression)
-    end
+    def string(expression_statement), do: Node.string(expression_statement.expression)
   end
 end

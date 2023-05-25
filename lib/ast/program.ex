@@ -9,4 +9,10 @@ defmodule Ast.Program do
   @type t :: %{
     statements: list(any())
   }
+
+  def string(program) do
+    program.statements
+    |> Enum.map(fn statement -> statement.string() end)
+    |> Enum.join()
+  end
 end

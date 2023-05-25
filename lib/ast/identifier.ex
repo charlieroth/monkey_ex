@@ -13,14 +13,10 @@ defmodule Ast.Identifier do
   defstruct [:token, :value]
 
   defimpl Ast.Node, for: __MODULE__ do
-    def token_literal(identifier) do
-      identifier.token.literal
-    end
+    def token_literal(identifier), do: identifier.token.literal
 
-    def node_type(_), do: :expression
+    def node_type(_node), do: :expression
 
-    def value(identifier) do
-      identifier.value
-    end
+    def string(identifier), do: identifier.value
   end
 end

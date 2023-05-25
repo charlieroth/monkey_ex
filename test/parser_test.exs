@@ -1,14 +1,7 @@
 defmodule ParserTest do
   use ExUnit.Case
 
-  alias Mirlang.{Parser, Lexer, Token}
-
-  alias Ast.{
-    Program,
-    LetStatement,
-    Identifier,
-    IntegerLiteral
-  }
+  alias Mirlang.{Parser, Token}
 
   describe "from_tokens/1" do
     test "creates parser with tokens" do
@@ -72,7 +65,7 @@ defmodule ParserTest do
         %Token{type: :eof, literal: ""}
       ]
 
-      {parser, program} =
+      {parser, _program} =
         tokens
         |> Parser.from_tokens()
         |> Parser.parse([])

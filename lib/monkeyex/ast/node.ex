@@ -1,6 +1,6 @@
-defprotocol Ast.Node do
+defprotocol MonkeyEx.Ast.Node do
   @moduledoc """
-  `Ast.Node` is a protocol that all AST nodes implement.
+  `MonkeyEx.Ast.Node` is a protocol that all AST nodes implement.
   """
 
   @doc "Returns the token literal of the node"

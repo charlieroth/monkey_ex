@@ -1,6 +1,6 @@
-defmodule Mirlang.Lexer do
+defmodule MonkeyEx.Lexer do
   @moduledoc false
-  alias Mirlang.Token
+  alias MonkeyEx.Token
 
   defguardp is_whitespace(ch) when ch in ~c[ \n\t]
   defguardp is_letter(ch) when ch in ?a..?z or ch in ?A..?Z or ch == ?_

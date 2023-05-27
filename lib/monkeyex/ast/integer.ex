@@ -1,6 +1,6 @@
-defmodule Ast.IntegerLiteral do
+defmodule MonkeyEx.Ast.IntegerLiteral do
   @moduledoc """
-  `Ast.IntegerLiteral` is a integer literal.
+  `MonkeyEx.Ast.IntegerLiteral` is a integer literal.
 
   Example:
 
@@ -9,7 +9,7 @@ defmodule Ast.IntegerLiteral do
   ```
   """
 
-  alias Ast.Node
+  alias MonkeyEx.Ast.Node
 
   @enforce_keys [:token, :value]
   defstruct [:token, :value]

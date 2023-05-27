@@ -1,6 +1,6 @@
-defmodule Ast.ReturnStatement do
+defmodule MonkeyEx.Ast.ReturnStatement do
   @moduledoc """
-  `Ast.ReturnStatement` is a statement that returns a value.
+  `MonkeyEx.Ast.ReturnStatement` is a statement that returns a value.
 
   Example:
 
@@ -11,7 +11,7 @@ defmodule Ast.ReturnStatement do
   ```
   """
 
-  alias Ast.Node
+  alias MonkeyEx.Ast.Node
 
   @enforce_keys [:token, :return_value]
   defstruct [:token, :return_value]
@@ -24,7 +24,7 @@ defmodule Ast.ReturnStatement do
     def string(return_statement) do
       output = [
         Node.token_literal(return_statement),
-        " ",
+        " "
       ]
 
       output =
@@ -34,7 +34,7 @@ defmodule Ast.ReturnStatement do
           output
         end
 
-      output = output ++ [";"] 
+      output = output ++ [";"]
       Enum.join(output)
     end
   end

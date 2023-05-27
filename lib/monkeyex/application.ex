@@ -1,4 +1,4 @@
-defmodule Mirlang.Application do
+defmodule MonkeyEx.Application do
   @moduledoc false
 
   use Application
@@ -6,7 +6,7 @@ defmodule Mirlang.Application do
   @impl true
   def start(_type, _args) do
     children = []
-    opts = [strategy: :one_for_one, name: Mirlang.Supervisor]
+    opts = [strategy: :one_for_one, name: MonkeyEx.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

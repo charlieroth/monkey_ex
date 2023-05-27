@@ -1,13 +1,13 @@
-defmodule Mirlang.Parser do
+defmodule MonkeyEx.Parser do
   @enforce_keys [:tokens, :current_token, :peek_token, :errors]
   defstruct [:tokens, :current_token, :peek_token, :errors]
 
   require Logger
 
-  alias Mirlang.Parser
-  alias Mirlang.Token
+  alias MonkeyEx.Parser
+  alias MonkeyEx.Token
 
-  alias Ast.{
+  alias MonkeyEx.Ast.{
     Program,
     LetStatement,
     ReturnStatement,

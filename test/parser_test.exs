@@ -1,23 +1,23 @@
 defmodule ParserTest do
   use ExUnit.Case
 
-  alias Mirlang.{Parser, Token}
-  alias Ast.ExpressionStatement
+  alias MonkeyEx.{Parser, Token}
+  alias MonkeyEx.Ast.ExpressionStatement
 
   describe "from_tokens/1" do
     test "creates parser with tokens" do
       tokens = [
-        %Token{type: :let, literal: "let"},
-        %Token{type: :ident, literal: "five"},
-        %Token{type: :assign, literal: "="},
-        %Token{type: :int, literal: "5"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :let, literal: "let"},
-        %Token{type: :ident, literal: "ten"},
-        %Token{type: :assign, literal: "="},
-        %Token{type: :int, literal: "10"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :eof, literal: ""}
+        :let,
+        {:ident, "five"},
+        :assign,
+        {:int, "5"},
+        :semicolon,
+        :let,
+        {:ident, "ten"},
+        :assign,
+        {:int, "10"},
+        :semicolon,
+        :eof
       ]
 
       parser = Parser.from_tokens(tokens)
@@ -32,17 +32,17 @@ defmodule ParserTest do
   describe "parse/2" do
     test "parses variable declarations" do
       tokens = [
-        %Token{type: :let, literal: "let"},
-        %Token{type: :ident, literal: "five"},
-        %Token{type: :assign, literal: "="},
-        %Token{type: :int, literal: "5"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :let, literal: "let"},
-        %Token{type: :ident, literal: "ten"},
-        %Token{type: :assign, literal: "="},
-        %Token{type: :int, literal: "10"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :eof, literal: ""}
+        :let,
+        {:ident, "five"},
+        :assign,
+        {:int, "5"},
+        :semicolon,
+        :let,
+        {:ident, "ten"},
+        :assign,
+        {:int, "10"},
+        :semicolon,
+        :eof
       ]
 
       {parser, program} =
@@ -58,12 +58,12 @@ defmodule ParserTest do
 
     test "parses and produces error for missing identifier" do
       tokens = [
-        %Token{type: :let, literal: "let"},
-        # %Token{type: :ident, literal: "five"},
-        %Token{type: :assign, literal: "="},
-        %Token{type: :int, literal: "5"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :eof, literal: ""}
+        :let,
+        # {:ident, "five"},
+        :assign,
+        {:int, literal: "5"},
+        :semicolon,
+        :eof
       ]
 
       {parser, _program} =
@@ -76,19 +76,19 @@ defmodule ParserTest do
 
     test "parses return statements" do
       tokens = [
-        %Token{type: :return, literal: "return"},
-        %Token{type: :int, literal: "5"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :return, literal: "return"},
-        %Token{type: :int, literal: "10"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :return, literal: "return"},
-        %Token{type: :ident, literal: "add"},
-        %Token{type: :lparen, literal: "("},
-        %Token{type: :int, literal: "15"},
-        %Token{type: :rparen, literal: ")"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :eof, literal: ""}
+        :return,
+        {:int, "5"},
+        :semicolon,
+        :return,
+        {:int, "10"},
+        :semicolon,
+        :return,
+        {:ident, "add"},
+        :lparen,
+        {:int, "15"},
+        :rparen,
+        :semicolon,
+        :eof
       ]
 
       {parser, program} =
@@ -100,18 +100,20 @@ defmodule ParserTest do
       assert parser.peek_token == nil
       assert length(program.statements) == 3
 
-      all_return_statements = Enum.all?(
-        program.statements, 
-        fn s -> s.return_value != nil end
-      )
+      all_return_statements =
+        Enum.all?(
+          program.statements,
+          fn s -> s.return_value != nil end
+        )
+
       assert all_return_statements
     end
 
     test "parses simple expression statement" do
       tokens = [
-        %Token{type: :ident, literal: "foobar"},
-        %Token{type: :semicolon, literal: ";"},
-        %Token{type: :eof, literal: ""},
+        {:ident, "foobar"},
+        :semicolon,
+        :eof
       ]
 
       {parser, program} =

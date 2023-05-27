@@ -28,6 +28,7 @@ defmodule MonkeyEx.Token do
           | :else
           | :return
 
+  @spec literal(t()) :: String.t()
   def literal({:ident, identifier}), do: identifier
   def literal({:int, number}), do: number
   def literal(:assign), do: "="

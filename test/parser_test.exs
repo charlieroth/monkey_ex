@@ -5,6 +5,7 @@ defmodule ParserTest do
 
   alias MonkeyEx.Ast.{
     ExpressionStatement,
+    InfixExpression,
     Identifier,
     IntegerLiteral
   }
@@ -76,9 +77,10 @@ defmodule ParserTest do
         |> Parser.init()
         |> Parser.parse([])
 
-      assert length(parser.errors) == 1
-      err = Enum.at(parser.errors, 0)
-      assert err =~ "Expected token #{inspect(:ident)}"
+      assert parser.errors == [
+               "No prefix function for token: assign",
+               "Expected token :ident, got :assign"
+             ]
     end
 
     test "parses return statements" do
@@ -159,7 +161,7 @@ defmodule ParserTest do
         :eof
       ]
 
-      {parser, program} =
+      {_parser, program} =
         tokens
         |> Parser.init()
         |> Parser.parse([])
@@ -182,6 +184,33 @@ defmodule ParserTest do
                  token: :minus,
                  operator: "-",
                  right: %MonkeyEx.Ast.IntegerLiteral{token: {:int, "15"}, value: 15}
+               }
+             }
+    end
+
+    test "parse infix expressions" do
+      tokens = [
+        {:int, "5"},
+        :plus,
+        {:int, "5"},
+        :semicolon,
+        :eof
+      ]
+
+      {_parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      first_expression = Enum.at(program.statements, 0)
+
+      assert first_expression == %ExpressionStatement{
+               token: {:int, "5"},
+               expression: %InfixExpression{
+                 token: :plus,
+                 left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                 operator: "+",
+                 right: %IntegerLiteral{token: {:int, "5"}, value: 5}
                }
              }
     end

@@ -1,11 +1,14 @@
 defmodule MonkeyEx.Ast.InfixExpression do
   alias MonkeyEx.Ast.Node
+  alias MonkeyEx.Token
 
   @enforce_keys [:token, :left, :operator, :right]
   defstruct [:token, :left, :operator, :right]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(infix_expression), do: infix_expression.token.literal
+    def token_literal(infix_expression) do
+      Token.literal(infix_expression.token)
+    end
 
     def node_type(_node), do: :expression
 

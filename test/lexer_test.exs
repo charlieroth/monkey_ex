@@ -1,8 +1,8 @@
 defmodule LexerTest do
   use ExUnit.Case
 
-  alias Mirlang.Lexer
-  alias Mirlang.Token
+  alias MonkeyEx.Lexer
+  alias MonkeyEx.Token
 
   describe "init/1" do
     test "tokenizes simple set of syntax symbols" do

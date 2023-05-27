@@ -1,9 +1,9 @@
-defmodule Monkeyex.MixProject do
+defmodule MonkeyEx.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :monkeyex,
+      app: :monkey_ex,
       version: "0.1.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
@@ -14,7 +14,7 @@ defmodule Monkeyex.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Monkeyex.Application, []}
+      mod: {MonkeyEx.Application, []}
     ]
   end
 

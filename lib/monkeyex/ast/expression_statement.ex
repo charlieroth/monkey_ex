@@ -1,5 +1,5 @@
-defmodule Ast.ExpressionStatement do
-  alias Ast.Node
+defmodule MonkeyEx.Ast.ExpressionStatement do
+  alias MonkeyEx.Ast.Node
 
   @enforce_keys [:token, :expression]
   defstruct [:token, :expression]

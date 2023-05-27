@@ -1,6 +1,6 @@
-defmodule Ast.Identifier do
+defmodule MonkeyEx.Ast.Identifier do
   @moduledoc """
-  `Ast.Identifier` is a name given to a variable or function.
+  `MonkeyEx.Ast.Identifier` is a name given to a variable or function.
 
   Example:
 
@@ -12,7 +12,7 @@ defmodule Ast.Identifier do
   @enforce_keys [:token, :value]
   defstruct [:token, :value]
 
-  defimpl Ast.Node, for: __MODULE__ do
+  defimpl MonkeyEx.Ast.Node, for: __MODULE__ do
     def token_literal(identifier), do: identifier.token.literal
 
     def node_type(_node), do: :expression

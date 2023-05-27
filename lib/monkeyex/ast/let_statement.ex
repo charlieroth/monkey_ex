@@ -1,6 +1,6 @@
-defmodule Ast.LetStatement do
+defmodule MonkeyEx.Ast.LetStatement do
   @moduledoc """
-  `Ast.LetStatement` is a variable declaration.
+  `MonkeyEx.Ast.LetStatement` is a variable declaration.
 
   Example:
 
@@ -10,7 +10,7 @@ defmodule Ast.LetStatement do
   ```
   """
 
-  alias Ast.Node
+  alias MonkeyEx.Ast.Node
 
   @enforce_keys [:token, :name, :value]
   defstruct [:token, :name, :value]

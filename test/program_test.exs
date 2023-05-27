@@ -2,7 +2,8 @@ defmodule ProgramTest do
   use ExUnit.Case
 
   alias Mirlang.Token
-  alias Ast.{
+
+  alias MonkeyEx.Ast.{
     Program,
     LetStatement,
     Identifier
@@ -16,13 +17,13 @@ defmodule ProgramTest do
             token: %Token{type: :let, literal: "let"},
             name: %Identifier{
               token: %Token{type: :ident, literal: "myVar"},
-              value: "myVar",
+              value: "myVar"
             },
             value: %Identifier{
               token: %Token{type: :ident, literal: "anotherVar"},
-              value: "anotherVar",
+              value: "anotherVar"
             }
-          },
+          }
         ]
       }
 

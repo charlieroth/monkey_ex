@@ -1,5 +1,5 @@
-defmodule Ast.InfixExpression do
-  alias Ast.Node
+defmodule MonkeyEx.Ast.InfixExpression do
+  alias MonkeyEx.Ast.Node
 
   @enforce_keys [:token, :left, :operator, :right]
   defstruct [:token, :left, :operator, :right]

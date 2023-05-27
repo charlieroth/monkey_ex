@@ -1,4 +1,4 @@
-defmodule Mirlang.Token do
+defmodule MonkeyEx.Token do
   @type t ::
           {:illegal, String.t()}
           | :eof

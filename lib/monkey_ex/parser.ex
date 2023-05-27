@@ -13,7 +13,8 @@ defmodule MonkeyEx.Parser do
     ReturnStatement,
     Identifier,
     IntegerLiteral,
-    ExpressionStatement
+    ExpressionStatement,
+    PrefixExpression
     # InfixExpression
   }
 
@@ -99,7 +100,7 @@ defmodule MonkeyEx.Parser do
     with {:ok, parser, ident_token} <- expect_peek(parser, :ident),
          {:ok, parser, _assign_token} <- expect_peek(parser, :assign),
          parser <- next_token(parser),
-         {:ok, parser, value} <- parse_expression(parser, @precedence.lowest) do
+         {:ok, parser, value} <- parse_expression(parser) do
       identifier = %Identifier{token: ident_token, value: Token.literal(ident_token)}
       parser = skip_semicolon(parser)
       {parser, %LetStatement{token: curr_token, name: identifier, value: value}}
@@ -117,7 +118,7 @@ defmodule MonkeyEx.Parser do
     curr_token = parser.current_token
 
     with parser <- next_token(parser),
-         {:ok, parser, return_value} = parse_expression(parser, @precedence.lowest),
+         {:ok, parser, return_value} = parse_expression(parser),
          parser <- skip_semiclon(parser) do
       {parser, %ReturnStatement{token: curr_token, return_value: return_value}}
     else
@@ -130,7 +131,7 @@ defmodule MonkeyEx.Parser do
   defp parse_expression_statement(parser) do
     curr_token = parser.current_token
 
-    with {:ok, parser, expression} <- parse_expression(parser, @precedence.lowest) do
+    with {:ok, parser, expression} <- parse_expression(parser) do
       {
         parser,
         %ExpressionStatement{token: curr_token, expression: expression}
@@ -141,9 +142,9 @@ defmodule MonkeyEx.Parser do
     end
   end
 
-  @spec parse_expression(%Parser{}, any()) ::
+  @spec parse_expression(%Parser{}) ::
           {:ok, %Parser{}, expression()} | {:error, %Parser{}, nil}
-  defp parse_expression(parser, _precedence) do
+  defp parse_expression(parser) do
     case prefix_parse_fns(parser.current_token, parser) do
       {parser, nil} ->
         {:error, parser, nil}
@@ -174,6 +175,8 @@ defmodule MonkeyEx.Parser do
           {%Parser{}, expression() | nil}
   defp prefix_parse_fns({:ident, _}, parser), do: parse_identifier(parser)
   defp prefix_parse_fns({:int, _}, parser), do: parse_int(parser)
+  defp prefix_parse_fns(:bang, parser), do: parse_bang(parser)
+  defp prefix_parse_fns(:minus, parser), do: parse_minus(parser)
   defp prefix_parse_fns(_, parser), do: {parser, nil}
 
   # defp infix_parse_fns(:plus), do: &parse_infix_expression(&1, &2)
@@ -227,6 +230,40 @@ defmodule MonkeyEx.Parser do
         expression = %IntegerLiteral{token: parser.current_token, value: value}
         {parser, expression}
     end
+  end
+
+  @spec parse_bang(%Parser{}) :: {%Parser{}, %PrefixExpression{}}
+  defp parse_bang(parser) do
+    curr_token = parser.current_token
+    bang_operator = Token.literal(curr_token)
+    parser = next_token(parser)
+    {_, parser, right_expression} = parse_expression(parser)
+
+    {
+      parser,
+      %PrefixExpression{
+        token: curr_token,
+        operator: bang_operator,
+        right: right_expression
+      }
+    }
+  end
+
+  @spec parse_minus(%Parser{}) :: {%Parser{}, %PrefixExpression{}}
+  defp parse_minus(parser) do
+    curr_token = parser.current_token
+    minus_operator = Token.literal(curr_token)
+    parser = next_token(parser)
+    {_, parser, right_expression} = parse_expression(parser)
+
+    {
+      parser,
+      %PrefixExpression{
+        token: curr_token,
+        operator: minus_operator,
+        right: right_expression
+      }
+    }
   end
 
   @spec skip_semicolon(%Parser{}) :: %Parser{}

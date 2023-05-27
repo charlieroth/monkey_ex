@@ -147,5 +147,43 @@ defmodule ParserTest do
                expression: %IntegerLiteral{token: {:int, "5"}, value: 5}
              }
     end
+
+    test "parse prefix expressions" do
+      tokens = [
+        :bang,
+        {:int, "5"},
+        :semicolon,
+        :minus,
+        {:int, "15"},
+        :semicolon,
+        :eof
+      ]
+
+      {parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      first_statement = Enum.at(program.statements, 0)
+      second_statement = Enum.at(program.statements, 1)
+
+      assert first_statement == %ExpressionStatement{
+               token: :bang,
+               expression: %MonkeyEx.Ast.PrefixExpression{
+                 token: :bang,
+                 operator: "!",
+                 right: %MonkeyEx.Ast.IntegerLiteral{token: {:int, "5"}, value: 5}
+               }
+             }
+
+      assert second_statement == %ExpressionStatement{
+               token: :minus,
+               expression: %MonkeyEx.Ast.PrefixExpression{
+                 token: :minus,
+                 operator: "-",
+                 right: %MonkeyEx.Ast.IntegerLiteral{token: {:int, "15"}, value: 15}
+               }
+             }
+    end
   end
 end

@@ -2,103 +2,78 @@ defmodule Mirlang.Lexer do
   @moduledoc false
   alias Mirlang.Token
 
-  def lex(input) do
-    input
-    |> String.split("", trim: true)
-    |> tokenize([])
+  defguardp is_whitespace(ch) when ch in ~c[ \n\t]
+  defguardp is_letter(ch) when ch in ?a..?z or ch in ?A..?Z or ch == ?_
+  defguardp is_digit(ch) when ch in ?0..?9
+
+  @spec init(String.t()) :: [Token.t()]
+  def init(input) when is_binary(input), do: lex(input, [])
+
+  @spec lex(String.t(), [Token.t()]) :: [Token.t()]
+  defp lex(<<>>, tokens), do: [:eof | tokens] |> Enum.reverse()
+
+  # Ignore whitespace
+  defp lex(<<ch::8, rest::binary>>, tokens) when is_whitespace(ch) do
+    lex(rest, tokens)
   end
 
-  def tokenize(_chars = [], tokens) do
-    Enum.reverse([Token.new(:eof, "") | tokens])
+  # Recursively tokenize/lex the input string
+  defp lex(input, tokens) do
+    {token, rest} = tokenize(input)
+    lex(rest, [token | tokens])
   end
 
-  def tokenize(chars = [ch | rest], tokens) do
-    cond do
-      is_whitespace(ch) -> tokenize(rest, tokens)
-      is_letter(ch) -> read_identifier(chars, tokens)
-      is_digit(ch) -> read_number(chars, tokens)
-      is_op(chars) -> read_op(chars, tokens)
-      is_return(chars) -> read_return(chars, tokens)
-      true -> read_next(chars, tokens)
-    end
+  @spec tokenize(String.t()) :: {Token.t(), String.t()}
+  defp tokenize(<<ch::8, _::binary>> = input) when is_letter(ch), do: read_identifier(input)
+  defp tokenize(<<ch::8, _::binary>> = input) when is_digit(ch), do: read_number(input)
+  defp tokenize(<<"==", rest::binary>>), do: {:equal_equal, rest}
+  defp tokenize(<<"!=", rest::binary>>), do: {:not_equal, rest}
+  defp tokenize(<<";", rest::binary>>), do: {:semicolon, rest}
+  defp tokenize(<<",", rest::binary>>), do: {:comma, rest}
+  defp tokenize(<<"(", rest::binary>>), do: {:lparen, rest}
+  defp tokenize(<<")", rest::binary>>), do: {:rparen, rest}
+  defp tokenize(<<"{", rest::binary>>), do: {:lbrace, rest}
+  defp tokenize(<<"}", rest::binary>>), do: {:rbrace, rest}
+  defp tokenize(<<"=", rest::binary>>), do: {:assign, rest}
+  defp tokenize(<<"+", rest::binary>>), do: {:plus, rest}
+  defp tokenize(<<"-", rest::binary>>), do: {:minus, rest}
+  defp tokenize(<<"!", rest::binary>>), do: {:bang, rest}
+  defp tokenize(<<"/", rest::binary>>), do: {:slash, rest}
+  defp tokenize(<<"*", rest::binary>>), do: {:asterisk, rest}
+  defp tokenize(<<">", rest::binary>>), do: {:greater_than, rest}
+  defp tokenize(<<"<", rest::binary>>), do: {:less_than, rest}
+  defp tokenize(<<"return", rest::binary>>), do: {:return, rest}
+  defp tokenize(<<ch::8, rest::binary>>), do: {{:illegal, <<ch>>}, rest}
+
+  @spec read_identifier(String.t(), String.t()) :: {Token.t(), String.t()}
+  defp read_identifier(input, acc \\ "")
+
+  defp read_identifier(<<ch::8, rest::binary>>, acc) when is_letter(ch) do
+    read_identifier(rest, acc <> <<ch>>)
   end
 
-  def read_identifier(chars, tokens) do
-    {identifier, rest} = Enum.split_while(chars, &is_letter/1)
-    identifier = Enum.join(identifier)
-    token = Token.new(Token.lookup_identifier(identifier), identifier)
-    tokenize(rest, [token | tokens])
+  defp read_identifier(rest, identifier) do
+    {tokenize_ident(identifier), rest}
   end
 
-  def read_number(chars, tokens) do
-    {number, rest} = Enum.split_while(chars, &is_digit/1)
-    number = Enum.join(number)
-    token = Token.new(:int, number)
-    tokenize(rest, [token | tokens])
+  @spec tokenize_ident(String.t()) :: Token.t()
+  defp tokenize_ident("fn"), do: :fn
+  defp tokenize_ident("let"), do: :let
+  defp tokenize_ident("if"), do: :if
+  defp tokenize_ident("else"), do: :else
+  defp tokenize_ident("return"), do: :return
+  defp tokenize_ident("true"), do: true
+  defp tokenize_ident("false"), do: false
+  defp tokenize_ident(identifier), do: {:ident, identifier}
+
+  @spec read_number(String.t(), String.t()) :: {Token.t(), String.t()}
+  defp read_number(input, acc \\ "")
+
+  defp read_number(<<ch::8, rest::binary>>, acc) when is_digit(ch) do
+    read_number(rest, acc <> <<ch>>)
   end
 
-  def read_op(chars, tokens) do
-    {op, rest} = Enum.split(chars, 2)
-    op = Enum.join(op)
-
-    token =
-      case op do
-        "==" -> Token.new(:equal_equal, op)
-        "!=" -> Token.new(:not_equal, op)
-      end
-
-    tokenize(rest, [token | tokens])
-  end
-
-  def read_return(chars, tokens) do
-    {ret, rest} = Enum.split(chars, 5)
-    ret = Enum.join(ret)
-    token = Token.new(:return, ret)
-    tokenize(rest, [token | tokens])
-  end
-
-  def read_next(_chars = [ch | rest], tokens) do
-    token =
-      case ch do
-        ";" -> Token.new(:semicolon, ch)
-        "," -> Token.new(:comma, ch)
-        "(" -> Token.new(:lparen, ch)
-        ")" -> Token.new(:rparen, ch)
-        "{" -> Token.new(:lbrace, ch)
-        "}" -> Token.new(:rbrace, ch)
-        "=" -> Token.new(:assign, ch)
-        "+" -> Token.new(:plus, ch)
-        "-" -> Token.new(:minus, ch)
-        "!" -> Token.new(:bang, ch)
-        "/" -> Token.new(:slash, ch)
-        "*" -> Token.new(:asterisk, ch)
-        ">" -> Token.new(:greater_than, ch)
-        "<" -> Token.new(:less_than, ch)
-        _ -> Token.new(:illegal, "")
-      end
-
-    tokenize(rest, [token | tokens])
-  end
-
-  def is_whitespace(ch) do
-    ch == " " || ch == "\n" || ch == "\t"
-  end
-
-  def is_letter(ch) do
-    ("a" <= ch && ch <= "z") || ("A" <= ch && ch <= "Z") || ch == "_"
-  end
-
-  def is_digit(ch) do
-    "0" <= ch && ch <= "9"
-  end
-
-  def is_op(chars) do
-    (Enum.at(chars, 0) == "!" || Enum.at(chars, 0) == "=") && Enum.at(chars, 1) == "="
-  end
-
-  def is_return(chars) do
-    {ret, _rest} = Enum.split(chars, 5)
-    ret = Enum.join(ret)
-    ret == "return"
+  defp read_number(rest, number) do
+    {{:int, number}, rest}
   end
 end

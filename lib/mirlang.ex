@@ -8,7 +8,7 @@ defmodule Mirlang do
 
   def run(input) do
     input
-    |> Lexer.lex()
+    |> Lexer.init()
     |> Parser.from_tokens()
     |> Parser.parse([])
   end

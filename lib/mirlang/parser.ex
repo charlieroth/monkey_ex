@@ -18,20 +18,26 @@ defmodule Mirlang.Parser do
   }
 
   @type t :: %{
-          tokens: list(Token.t()),
+          tokens: [Token.t()],
           current_token: Token.t(),
           peek_token: Token.t(),
-          errors: list(String.t())
+          errors: [String.t()]
         }
 
   @precedence %{
     lowest: 0,
-    equals: 1,       # ==
-    less_greater: 2, # > or <
-    sum: 3,          # +
-    product: 4,      # *
-    prefix: 5,       # -X or !X
-    call: 6          # myFunc(X)
+    # ==
+    equals: 1,
+    # > or <
+    less_greater: 2,
+    # +
+    sum: 3,
+    # *
+    product: 4,
+    # -X or !X
+    prefix: 5,
+    # myFunc(X)
+    call: 6
   }
 
   def from_tokens(tokens) do
@@ -49,7 +55,7 @@ defmodule Mirlang.Parser do
     parser |> parse_program(statements)
   end
 
-  def parse_program(%Parser{current_token: %Token{type: :eof}} = parser, statements) do
+  def parse_program(%Parser{current_token: :eof} = parser, statements) do
     statements = Enum.reverse(statements)
     program = %Program{statements: statements}
     {parser, program}
@@ -104,17 +110,21 @@ defmodule Mirlang.Parser do
   def parse_expression_statement(parser) do
     curr_token = parser.current_token
     {_, parser, expression} = parse_expression(parser, @precedence.lowest)
+
     expression_statement = %ExpressionStatement{
       token: curr_token,
       expression: expression
     }
+
     {parser, expression_statement}
   end
 
   def parse_expression(parser, precedence) do
     case prefix_parse_fns(parser.current_token.type, parser) do
-      {parser, nil} -> {:error, parser, nil}
-      {parser, expression} -> 
+      {parser, nil} ->
+        {:error, parser, nil}
+
+      {parser, expression} ->
         {parser, expression} = check_infix(parser, expression, precedence)
         {:ok, parser, expression}
     end
@@ -123,7 +133,7 @@ defmodule Mirlang.Parser do
   def check_infix(parser, left_expression, precedence) do
     next_not_semi = parser.peek_token.type != :semicolon
     lower_precedence = precedence < peek_precedence(parser)
-    allowed = next_not_semi && lower_precedence 
+    allowed = next_not_semi && lower_precedence
 
     with true <- allowed,
          infix_fn <- infix_parse_fns(parser.peek_token.type),
@@ -144,7 +154,7 @@ defmodule Mirlang.Parser do
   def infix_parse_fns(:minus), do: &parse_infix_expression(&1, &2)
   def infix_parse_fns(:slash), do: &parse_infix_expression(&1, &2)
   def infix_parse_fns(:asterisk), do: &parse_infix_expression(&1, &2)
-  def infix_parse_fns(_), do: nil 
+  def infix_parse_fns(_), do: nil
 
   def parse_infix_expression(parser, left_expression) do
     curr_token = parser.curr_token
@@ -152,20 +162,23 @@ defmodule Mirlang.Parser do
     precedence = curr_precedence(parser)
     parser = parser |> next_token()
     {_, parser, right_expression} = parse_expression(parser, precedence)
+
     infix_expression = %InfixExpression{
       token: curr_token,
       left: left_expression,
       operator: operator,
       right: right_expression
     }
+
     {parser, infix_expression}
   end
 
   def parse_identifier(parser) do
     expression = %Identifier{
-      token: parser.current_token, 
+      token: parser.current_token,
       value: parser.current_token.literal
     }
+
     {parser, expression}
   end
 
@@ -219,7 +232,7 @@ defmodule Mirlang.Parser do
   def curr_precedence(parser) do
     Map.get(@precedence, parser.curr_token.type, @precedence.lowest)
   end
-  
+
   def peek_precedence(parser) do
     Map.get(@precedence, parser.peek_token.type, @precedence.lowest)
   end

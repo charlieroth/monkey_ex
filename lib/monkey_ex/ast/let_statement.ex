@@ -11,18 +11,19 @@ defmodule MonkeyEx.Ast.LetStatement do
   """
 
   alias MonkeyEx.Ast.Node
+  alias MonkeyEx.Token
 
   @enforce_keys [:token, :name, :value]
   defstruct [:token, :name, :value]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(let_statement), do: let_statement.token.literal
+    def token_literal(let_statement), do: Token.literal(let_statement.token)
 
     def node_type(_node), do: :statement
 
     def string(let_statement) do
       output = [
-        Node.token_literal(let_statement),
+        Token.literal(let_statement.token),
         " ",
         Node.string(let_statement.name),
         " = "

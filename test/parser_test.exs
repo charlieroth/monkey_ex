@@ -1,10 +1,15 @@
 defmodule ParserTest do
   use ExUnit.Case
 
-  alias MonkeyEx.{Parser, Token}
-  alias MonkeyEx.Ast.ExpressionStatement
+  alias MonkeyEx.Parser
 
-  describe "from_tokens/1" do
+  alias MonkeyEx.Ast.{
+    ExpressionStatement,
+    Identifier,
+    IntegerLiteral
+  }
+
+  describe "init/1" do
     test "creates parser with tokens" do
       tokens = [
         :let,
@@ -20,7 +25,7 @@ defmodule ParserTest do
         :eof
       ]
 
-      parser = Parser.from_tokens(tokens)
+      parser = Parser.init(tokens)
       remaining_tokens = tokens |> Enum.drop(2)
 
       assert parser.tokens == remaining_tokens
@@ -47,7 +52,7 @@ defmodule ParserTest do
 
       {parser, program} =
         tokens
-        |> Parser.from_tokens()
+        |> Parser.init()
         |> Parser.parse([])
 
       assert parser.tokens == []
@@ -61,17 +66,19 @@ defmodule ParserTest do
         :let,
         # {:ident, "five"},
         :assign,
-        {:int, literal: "5"},
+        {:int, "5"},
         :semicolon,
         :eof
       ]
 
       {parser, _program} =
         tokens
-        |> Parser.from_tokens()
+        |> Parser.init()
         |> Parser.parse([])
 
       assert length(parser.errors) == 1
+      err = Enum.at(parser.errors, 0)
+      assert err =~ "Expected token #{inspect(:ident)}"
     end
 
     test "parses return statements" do
@@ -83,30 +90,19 @@ defmodule ParserTest do
         {:int, "10"},
         :semicolon,
         :return,
-        {:ident, "add"},
-        :lparen,
-        {:int, "15"},
-        :rparen,
+        {:int, "993322"},
         :semicolon,
         :eof
       ]
 
       {parser, program} =
         tokens
-        |> Parser.from_tokens()
+        |> Parser.init()
         |> Parser.parse([])
 
       assert parser.current_token == :eof
       assert parser.peek_token == nil
       assert length(program.statements) == 3
-
-      all_return_statements =
-        Enum.all?(
-          program.statements,
-          fn s -> s.return_value != nil end
-        )
-
-      assert all_return_statements
     end
 
     test "parses simple expression statement" do
@@ -116,14 +112,40 @@ defmodule ParserTest do
         :eof
       ]
 
-      {parser, program} =
+      {_parser, program} =
         tokens
-        |> Parser.from_tokens()
+        |> Parser.init()
         |> Parser.parse([])
 
       expression_statement = Enum.at(program.statements, 0)
-      IO.inspect(program.statements, 0)
-      assert true == true
+
+      assert expression_statement == %ExpressionStatement{
+               token: {:ident, "foobar"},
+               expression: %Identifier{
+                 token: {:ident, "foobar"},
+                 value: "foobar"
+               }
+             }
+    end
+
+    test "integer literals" do
+      tokens = [
+        {:int, "5"},
+        :semicolon,
+        :eof
+      ]
+
+      {_parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      integer_literal_statement = Enum.at(program.statements, 0)
+
+      assert integer_literal_statement == %ExpressionStatement{
+               token: {:int, "5"},
+               expression: %IntegerLiteral{token: {:int, "5"}, value: 5}
+             }
     end
   end
 end

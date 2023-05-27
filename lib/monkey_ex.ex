@@ -7,7 +7,7 @@ defmodule MonkeyEx do
   def run(input) do
     input
     |> Lexer.init()
-    |> Parser.from_tokens()
+    |> Parser.init()
     |> Parser.parse([])
   end
 end

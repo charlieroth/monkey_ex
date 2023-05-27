@@ -1,8 +1,6 @@
 defmodule ProgramTest do
   use ExUnit.Case
 
-  alias MonkeyEx.Token
-
   alias MonkeyEx.Ast.{
     Program,
     LetStatement,

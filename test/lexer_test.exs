@@ -2,7 +2,6 @@ defmodule LexerTest do
   use ExUnit.Case
 
   alias MonkeyEx.Lexer
-  alias MonkeyEx.Token
 
   describe "init/1" do
     test "tokenizes simple set of syntax symbols" do

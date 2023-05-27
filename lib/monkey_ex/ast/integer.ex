@@ -10,12 +10,13 @@ defmodule MonkeyEx.Ast.IntegerLiteral do
   """
 
   alias MonkeyEx.Ast.Node
+  alias MonkeyEx.Token
 
   @enforce_keys [:token, :value]
   defstruct [:token, :value]
 
   defimpl Node, for: __MODULE__ do
-    def token_literal(integer), do: integer.token.literal
+    def token_literal(integer), do: Token.literal(integer.token)
 
     def node_type(_node), do: :expression
 

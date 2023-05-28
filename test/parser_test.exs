@@ -194,25 +194,113 @@ defmodule ParserTest do
         :plus,
         {:int, "5"},
         :semicolon,
+        {:int, "5"},
+        :minus,
+        {:int, "5"},
+        :semicolon,
+        {:int, "5"},
+        :asterisk,
+        {:int, "5"},
+        :semicolon,
+        {:int, "5"},
+        :slash,
+        {:int, "5"},
+        :semicolon,
+        {:int, "5"},
+        :greater_than,
+        {:int, "5"},
+        :semicolon,
+        {:int, "5"},
+        :less_than,
+        {:int, "5"},
+        :semicolon,
+        {:int, "5"},
+        :equal_equal,
+        {:int, "5"},
+        :semicolon,
+        {:int, "5"},
+        :not_equal,
+        {:int, "6"},
+        :semicolon,
         :eof
       ]
 
-      {_parser, program} =
-        tokens
-        |> Parser.init()
-        |> Parser.parse([])
+      {_parser, program} = tokens |> Parser.init() |> Parser.parse([])
 
-      first_expression = Enum.at(program.statements, 0)
-
-      assert first_expression == %ExpressionStatement{
-               token: {:int, "5"},
-               expression: %InfixExpression{
-                 token: :plus,
-                 left: %IntegerLiteral{token: {:int, "5"}, value: 5},
-                 operator: "+",
-                 right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+      assert program.statements == [
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :plus,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "+",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :minus,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "-",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :asterisk,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "*",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :slash,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "/",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :greater_than,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: ">",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :less_than,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "<",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :equal_equal,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "==",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
+                 token: {:int, "5"},
+                 expression: %InfixExpression{
+                   token: :not_equal,
+                   left: %IntegerLiteral{token: {:int, "5"}, value: 5},
+                   operator: "!=",
+                   right: %IntegerLiteral{token: {:int, "6"}, value: 6}
+                 }
                }
-             }
+             ]
     end
   end
 end

@@ -43,12 +43,16 @@ defmodule MonkeyEx.Parser do
     less_than: 2,
     # +
     plus: 3,
+    # -
+    minus: 3,
+    # /
+    slash: 4,
     # *
     asterisk: 4,
     # -X or !X
     prefix: 5,
-    minus: 5,
-    bang: 5,
+    # (
+    lparen: 6,
     # myFunc(X)
     call: 6
   }
@@ -168,20 +172,25 @@ defmodule MonkeyEx.Parser do
          infix_fn <- infix_parse_fns(parser.peek_token),
          true <- infix_fn != nil do
       parser = next_token(parser)
-      {parser, infix} = infix_fn.(parser, left_expression)
-      check_infix(parser, infix, precedence)
+      {parser, infix_expression} = infix_fn.(parser, left_expression)
+      check_infix(parser, infix_expression, precedence)
     else
-      _ -> {parser, left_expression}
+      _ ->
+        {parser, left_expression}
     end
   end
 
   defp infix_parse_fns(:plus), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:minus), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:slash), do: &parse_infix_expression(&1, &2)
+  defp infix_parse_fns(:greater_than), do: &parse_infix_expression(&1, &2)
+  defp infix_parse_fns(:less_than), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:asterisk), do: &parse_infix_expression(&1, &2)
+  defp infix_parse_fns(:not_equal), do: &parse_infix_expression(&1, &2)
+  defp infix_parse_fns(:equal_equal), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(_), do: nil
 
-  @spec parse_infix_expression(%Parser{}, any()) :: {%Parser{}, any()}
+  @spec parse_infix_expression(%Parser{}, any()) :: {%Parser{}, %InfixExpression{}}
   defp parse_infix_expression(parser, left_expression) do
     curr_token = parser.current_token
     operator = Token.literal(parser.current_token)

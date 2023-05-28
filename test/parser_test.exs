@@ -501,5 +501,90 @@ defmodule ParserTest do
         assert Program.string(program) == expected_program_string
       end)
     end
+
+    test "grouped expressions" do
+      inputs = [
+        {
+          [
+            {:int, "1"},
+            :plus,
+            :lparen,
+            {:int, "2"},
+            :plus,
+            {:int, "3"},
+            :rparen,
+            :plus,
+            {:int, "4"},
+            :semicolon,
+            :eof
+          ],
+          "((1 + (2 + 3)) + 4)"
+        },
+        {
+          [
+            :lparen,
+            {:int, "5"},
+            :plus,
+            {:int, "5"},
+            :rparen,
+            :asterisk,
+            {:int, "2"},
+            :semicolon,
+            :eof
+          ],
+          "((5 + 5) * 2)"
+        },
+        {
+          [
+            {:int, "2"},
+            :slash,
+            :lparen,
+            {:int, "5"},
+            :plus,
+            {:int, "5"},
+            :rparen,
+            :semicolon,
+            :eof
+          ],
+          "(2 / (5 + 5))"
+        },
+        {
+          [
+            :minus,
+            :lparen,
+            {:int, "5"},
+            :plus,
+            {:int, "5"},
+            :rparen,
+            :semicolon,
+            :eof
+          ],
+          "(-(5 + 5))"
+        },
+        {
+          [
+            :bang,
+            :lparen,
+            true,
+            :equal_equal,
+            true,
+            :rparen,
+            :semicolon,
+            :eof
+          ],
+          "(!(true == true))"
+        }
+      ]
+
+      inputs
+      |> Enum.each(fn {tokens, expected_program_string} ->
+        {_parser, program} =
+          tokens
+          |> Parser.init()
+          |> Parser.parse([])
+
+        assert Program.string(program) == expected_program_string
+      end)
+    end
   end
 end

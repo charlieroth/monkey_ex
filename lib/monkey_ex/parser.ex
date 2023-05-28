@@ -162,6 +162,7 @@ defmodule MonkeyEx.Parser do
   defp prefix_parse_fns({:int, _}, parser), do: parse_int(parser)
   defp prefix_parse_fns(true, parser), do: parse_boolean(parser)
   defp prefix_parse_fns(false, parser), do: parse_boolean(parser)
+  defp prefix_parse_fns(:lparen, parser), do: parse_grouped_expression(parser)
   defp prefix_parse_fns(:bang, parser), do: parse_prefix_expression(parser)
   defp prefix_parse_fns(:minus, parser), do: parse_prefix_expression(parser)
 
@@ -249,6 +250,19 @@ defmodule MonkeyEx.Parser do
     }
   end
 
+  defp parse_grouped_expression(parser) do
+    parser = next_token(parser)
+    {_, parser, inner_expression} = parse_expression(parser, @precedence.lowest)
+
+    case expect_peek(parser, :rparen) do
+      {:error, parser} ->
+        {parser, nil}
+
+      {:ok, parser, _} ->
+        {parser, inner_expression}
+    end
+  end
+
   @spec parse_prefix_expression(%Parser{}) :: {%Parser{}, %PrefixExpression{}}
   defp parse_prefix_expression(parser) do
     curr_token = parser.current_token
@@ -296,6 +310,15 @@ defmodule MonkeyEx.Parser do
 
   defp expect_peek(%Parser{peek_token: peek_token} = parser, :assign) do
     parser = add_error(parser, "Expected token #{inspect(:assign)}, got #{inspect(peek_token)}")
+    {:error, parser}
+  end
+
+  defp expect_peek(%Parser{peek_token: :rparen} = parser, :rparen) do
+    {:ok, next_token(parser), :rparen}
+  end
+
+  defp expect_peek(%Parser{peek_token: peek_token} = parser, :rparen) do
+    parser = add_error(parser, "Expected token #{inspect(:rparen)}, got #{inspect(peek_token)}")
     {:error, parser}
   end
 

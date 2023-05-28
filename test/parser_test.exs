@@ -8,7 +8,8 @@ defmodule ParserTest do
     ExpressionStatement,
     InfixExpression,
     Identifier,
-    IntegerLiteral
+    IntegerLiteral,
+    BooleanLiteral
   }
 
   describe "init/1" do
@@ -223,6 +224,18 @@ defmodule ParserTest do
         :not_equal,
         {:int, "6"},
         :semicolon,
+        true,
+        :equal_equal,
+        true,
+        :semicolon,
+        true,
+        :not_equal,
+        false,
+        :semicolon,
+        false,
+        :equal_equal,
+        false,
+        :semicolon,
         :eof
       ]
 
@@ -299,6 +312,33 @@ defmodule ParserTest do
                    left: %IntegerLiteral{token: {:int, "5"}, value: 5},
                    operator: "!=",
                    right: %IntegerLiteral{token: {:int, "6"}, value: 6}
+                 }
+               },
+               %ExpressionStatement{
+                 token: true,
+                 expression: %InfixExpression{
+                   token: :equal_equal,
+                   left: %BooleanLiteral{token: true, value: true},
+                   operator: "==",
+                   right: %BooleanLiteral{token: true, value: true}
+                 }
+               },
+               %ExpressionStatement{
+                 token: true,
+                 expression: %InfixExpression{
+                   token: :not_equal,
+                   left: %BooleanLiteral{token: true, value: true},
+                   operator: "!=",
+                   right: %BooleanLiteral{token: false, value: false}
+                 }
+               },
+               %ExpressionStatement{
+                 token: false,
+                 expression: %InfixExpression{
+                   token: :equal_equal,
+                   left: %BooleanLiteral{token: false, value: false},
+                   operator: "==",
+                   right: %BooleanLiteral{token: false, value: false}
                  }
                }
              ]

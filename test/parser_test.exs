@@ -6,6 +6,7 @@ defmodule ParserTest do
   alias MonkeyEx.Ast.{
     Program,
     ExpressionStatement,
+    PrefixExpression,
     InfixExpression,
     Identifier,
     IntegerLiteral,
@@ -160,6 +161,12 @@ defmodule ParserTest do
         :minus,
         {:int, "15"},
         :semicolon,
+        :bang,
+        true,
+        :semicolon,
+        :bang,
+        false,
+        :semicolon,
         :eof
       ]
 
@@ -168,26 +175,40 @@ defmodule ParserTest do
         |> Parser.init()
         |> Parser.parse([])
 
-      first_statement = Enum.at(program.statements, 0)
-      second_statement = Enum.at(program.statements, 1)
-
-      assert first_statement == %ExpressionStatement{
-               token: :bang,
-               expression: %MonkeyEx.Ast.PrefixExpression{
+      assert program.statements == [
+               %ExpressionStatement{
                  token: :bang,
-                 operator: "!",
-                 right: %MonkeyEx.Ast.IntegerLiteral{token: {:int, "5"}, value: 5}
-               }
-             }
-
-      assert second_statement == %ExpressionStatement{
-               token: :minus,
-               expression: %MonkeyEx.Ast.PrefixExpression{
+                 expression: %PrefixExpression{
+                   token: :bang,
+                   operator: "!",
+                   right: %IntegerLiteral{token: {:int, "5"}, value: 5}
+                 }
+               },
+               %ExpressionStatement{
                  token: :minus,
-                 operator: "-",
-                 right: %MonkeyEx.Ast.IntegerLiteral{token: {:int, "15"}, value: 15}
+                 expression: %PrefixExpression{
+                   token: :minus,
+                   operator: "-",
+                   right: %IntegerLiteral{token: {:int, "15"}, value: 15}
+                 }
+               },
+               %ExpressionStatement{
+                 token: :bang,
+                 expression: %PrefixExpression{
+                   token: :bang,
+                   operator: "!",
+                   right: %BooleanLiteral{token: true, value: true}
+                 }
+               },
+               %ExpressionStatement{
+                 token: :bang,
+                 expression: %PrefixExpression{
+                   token: :bang,
+                   operator: "!",
+                   right: %BooleanLiteral{token: false, value: false}
+                 }
                }
-             }
+             ]
     end
 
     test "parse infix expressions" do

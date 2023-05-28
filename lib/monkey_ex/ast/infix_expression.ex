@@ -16,7 +16,7 @@ defmodule MonkeyEx.Ast.InfixExpression do
       left = Node.string(infix_expression.left)
       operator = infix_expression.operator
       right = Node.string(infix_expression.right)
-      "#{left} #{operator} #{right}"
+      "(#{left} #{operator} #{right})"
     end
   end
 end

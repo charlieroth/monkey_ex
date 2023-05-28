@@ -4,6 +4,7 @@ defmodule ParserTest do
   alias MonkeyEx.Parser
 
   alias MonkeyEx.Ast.{
+    Program,
     ExpressionStatement,
     InfixExpression,
     Identifier,
@@ -301,6 +302,127 @@ defmodule ParserTest do
                  }
                }
              ]
+    end
+
+    test "operator precedence parsing" do
+      inputs = [
+        {
+          [:minus, {:ident, "a"}, :asterisk, {:ident, "b"}, :semicolon, :eof],
+          "((-a) * b)"
+        },
+        {
+          [:bang, :minus, {:ident, "a"}, :semicolon, :eof],
+          "(!(-a))"
+        },
+        {
+          [{:ident, "a"}, :plus, {:ident, "b"}, :plus, {:ident, "c"}, :semicolon, :eof],
+          "((a + b) + c)"
+        },
+        {
+          [{:ident, "a"}, :plus, {:ident, "b"}, :minus, {:ident, "c"}, :semicolon, :eof],
+          "((a + b) - c)"
+        },
+        {
+          [{:ident, "a"}, :asterisk, {:ident, "b"}, :asterisk, {:ident, "c"}, :semicolon, :eof],
+          "((a * b) * c)"
+        },
+        {
+          [{:ident, "a"}, :asterisk, {:ident, "b"}, :slash, {:ident, "c"}, :semicolon, :eof],
+          "((a * b) / c)"
+        },
+        {
+          [{:ident, "a"}, :plus, {:ident, "b"}, :slash, {:ident, "c"}, :semicolon, :eof],
+          "(a + (b / c))"
+        },
+        {
+          [
+            {:ident, "a"},
+            :plus,
+            {:ident, "b"},
+            :asterisk,
+            {:ident, "c"},
+            :plus,
+            {:ident, "d"},
+            :slash,
+            {:ident, "e"},
+            :minus,
+            {:ident, "f"},
+            :semicolon,
+            :eof
+          ],
+          "(((a + (b * c)) + (d / e)) - f)"
+        },
+        {
+          [
+            {:int, "3"},
+            :plus,
+            {:int, "4"},
+            :semicolon,
+            :minus,
+            {:int, "5"},
+            :asterisk,
+            {:int, "5"},
+            :semicolon,
+            :eof
+          ],
+          "(3 + 4)((-5) * 5)"
+        },
+        {
+          [
+            {:int, "5"},
+            :greater_than,
+            {:int, "4"},
+            :equal_equal,
+            {:int, "3"},
+            :less_than,
+            {:int, "4"},
+            :eof
+          ],
+          "((5 > 4) == (3 < 4))"
+        },
+        {
+          [
+            {:int, "5"},
+            :less_than,
+            {:int, "4"},
+            :not_equal,
+            {:int, "3"},
+            :greater_than,
+            {:int, "4"},
+            :eof
+          ],
+          "((5 < 4) != (3 > 4))"
+        },
+        {
+          [
+            {:int, "3"},
+            :plus,
+            {:int, "4"},
+            :asterisk,
+            {:int, "5"},
+            :equal_equal,
+            {:int, "3"},
+            :asterisk,
+            {:int, "1"},
+            :plus,
+            {:int, "4"},
+            :asterisk,
+            {:int, "5"},
+            :eof
+          ],
+          "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"
+        }
+      ]
+
+      inputs
+      |> Enum.each(fn {tokens, expected_program_string} ->
+        {_parser, program} =
+          tokens
+          |> Parser.init()
+          |> Parser.parse([])
+
+        assert Program.string(program) == expected_program_string
+      end)
     end
   end
 end

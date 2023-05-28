@@ -15,7 +15,7 @@ defmodule MonkeyEx.Ast.PrefixExpression do
     def string(infix_expression) do
       operator = infix_expression.operator
       right_expression = Node.string(infix_expression.right)
-      "(#{operator} #{right_expression})"
+      "(#{operator}#{right_expression})"
     end
   end
 end

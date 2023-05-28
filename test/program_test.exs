@@ -7,7 +7,7 @@ defmodule ProgramTest do
     Identifier
   }
 
-  describe "print/1" do
+  describe "string/1" do
     test "stringifies let statement" do
       program = %Program{
         statements: [

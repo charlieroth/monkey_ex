@@ -219,16 +219,14 @@ defmodule MonkeyEx.Parser do
 
     case number do
       :error ->
-        msg = "Failed to parse #{number} as integer literal"
-        parser = parser |> add_error(msg)
-        {parser, nil}
+        {add_error(parser, "Failed to parse #{number} as integer literal"), nil}
 
       {value, _} ->
-        expression = %IntegerLiteral{token: parser.current_token, value: value}
-        {parser, expression}
+        {parser, %IntegerLiteral{token: parser.current_token, value: value}}
     end
   end
 
+  @spec parse_prefix_expression(%Parser{}) :: {%Parser{}, %PrefixExpression{}}
   defp parse_prefix_expression(parser) do
     curr_token = parser.current_token
     operator = Token.literal(curr_token)

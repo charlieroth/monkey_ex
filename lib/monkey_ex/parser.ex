@@ -13,6 +13,7 @@ defmodule MonkeyEx.Parser do
     ReturnStatement,
     Identifier,
     IntegerLiteral,
+    BooleanLiteral,
     ExpressionStatement,
     PrefixExpression,
     InfixExpression
@@ -23,7 +24,7 @@ defmodule MonkeyEx.Parser do
           | %ReturnStatement{}
           | %ExpressionStatement{}
 
-  @type expression :: %Identifier{} | %IntegerLiteral{}
+  @type expression :: %Identifier{} | %IntegerLiteral{} | %BooleanLiteral{}
 
   @type t :: %{
           tokens: [Token.t()],
@@ -159,6 +160,8 @@ defmodule MonkeyEx.Parser do
           {%Parser{}, expression() | nil}
   defp prefix_parse_fns({:ident, _}, parser), do: parse_identifier(parser)
   defp prefix_parse_fns({:int, _}, parser), do: parse_int(parser)
+  defp prefix_parse_fns(true, parser), do: parse_boolean(parser)
+  defp prefix_parse_fns(false, parser), do: parse_boolean(parser)
   defp prefix_parse_fns(:bang, parser), do: parse_prefix_expression(parser)
   defp prefix_parse_fns(:minus, parser), do: parse_prefix_expression(parser)
 
@@ -233,6 +236,17 @@ defmodule MonkeyEx.Parser do
       {value, _} ->
         {parser, %IntegerLiteral{token: parser.current_token, value: value}}
     end
+  end
+
+  @spec parse_boolean(%Parser{}) :: {%Parser{}, %BooleanLiteral{}}
+  defp parse_boolean(parser) do
+    {
+      parser,
+      %BooleanLiteral{
+        token: parser.current_token,
+        value: parser.current_token
+      }
+    }
   end
 
   @spec parse_prefix_expression(%Parser{}) :: {%Parser{}, %PrefixExpression{}}

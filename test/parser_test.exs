@@ -411,6 +411,22 @@ defmodule ParserTest do
             :eof
           ],
           "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"
+        },
+        {
+          [true, :semicolon, :eof],
+          "true"
+        },
+        {
+          [false, :semicolon, :eof],
+          "false"
+        },
+        {
+          [{:int, "3"}, :greater_than, {:int, "5"}, :equal_equal, false, :semicolon, :eof],
+          "((3 > 5) == false)"
+        },
+        {
+          [{:int, "3"}, :less_than, {:int, "5"}, :equal_equal, true, :semicolon, :eof],
+          "((3 < 5) == true)"
         }
       ]
 

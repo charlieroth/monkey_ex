@@ -11,6 +11,7 @@ defmodule MonkeyEx.Parser do
     Identifier,
     IntegerLiteral,
     BooleanLiteral,
+    FunctionLiteral,
     LetStatement,
     ReturnStatement,
     BlockStatement,
@@ -26,7 +27,7 @@ defmodule MonkeyEx.Parser do
           | %ExpressionStatement{}
           | %BlockStatement{}
 
-  @type expression :: %Identifier{} | %IntegerLiteral{} | %BooleanLiteral{}
+  @type expression :: %Identifier{} | %IntegerLiteral{} | %BooleanLiteral{} | %FunctionLiteral{}
 
   @type t :: %{
           tokens: [Token.t()],
@@ -166,6 +167,7 @@ defmodule MonkeyEx.Parser do
   defp prefix_parse_fns(false, parser), do: parse_boolean(parser)
   defp prefix_parse_fns(:lparen, parser), do: parse_grouped_expression(parser)
   defp prefix_parse_fns(:if, parser), do: parse_if_expression(parser)
+  defp prefix_parse_fns(:fn, parser), do: parse_function_literal(parser)
   defp prefix_parse_fns(:bang, parser), do: parse_prefix_expression(parser)
   defp prefix_parse_fns(:minus, parser), do: parse_prefix_expression(parser)
 
@@ -337,6 +339,57 @@ defmodule MonkeyEx.Parser do
   end
 
   defp parse_if_statement(parser), do: {parser, nil}
+
+  @spec parse_function_literal(%Parser{}) :: {%Parser{}, %FunctionLiteral{} | nil}
+  defp parse_function_literal(parser) do
+    curr_token = parser.current_token
+
+    with {:ok, parser, _} <- expect_peek(parser, :lparen),
+         {parser, parameters} <- parse_function_params(parser),
+         {:ok, parser, _} <- expect_peek(parser, :lbrace) do
+      {parser, body} = parse_block_statement(parser)
+
+      {
+        parser,
+        %FunctionLiteral{token: curr_token, parameters: Enum.reverse(parameters), body: body}
+      }
+    else
+      _ ->
+        {parser, nil}
+    end
+  end
+
+  defp parse_function_params(parser, identifiers \\ []) do
+    do_parse_function_params(parser, identifiers)
+  end
+
+  defp do_parse_function_params(%Parser{peek_token: :rparen} = parser, [] = identifiers) do
+    {next_token(parser), identifiers}
+  end
+
+  defp do_parse_function_params(parser, identifiers) do
+    parser = next_token(parser)
+
+    identifiers = [
+      %Identifier{token: parser.current_token, value: Token.literal(parser.current_token)}
+      | identifiers
+    ]
+
+    case parser.peek_token do
+      :comma ->
+        parser = next_token(parser)
+        do_parse_function_params(parser, identifiers)
+
+      _ ->
+        case expect_peek(parser, :rparen) do
+          {:ok, parser, _} ->
+            {parser, identifiers}
+
+          {:error, parser} ->
+            {parser, nil}
+        end
+    end
+  end
 
   @spec parse_prefix_expression(%Parser{}) :: {%Parser{}, %PrefixExpression{}}
   defp parse_prefix_expression(parser) do

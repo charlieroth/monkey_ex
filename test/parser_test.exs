@@ -634,5 +634,30 @@ defmodule ParserTest do
 
       assert Program.string(program) == "if (x < y) x else y"
     end
+
+    test "function literals" do
+      tokens = [
+        :fn,
+        :lparen,
+        {:ident, "x"},
+        :comma,
+        {:ident, "y"},
+        :rparen,
+        :lbrace,
+        {:ident, "x"},
+        :plus,
+        {:ident, "y"},
+        :semicolon,
+        :rbrace,
+        :eof
+      ]
+
+      {_parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      assert Program.string(program) == "fn(x, y) (x + y)"
+    end
   end
 end

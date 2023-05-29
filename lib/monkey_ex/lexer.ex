@@ -24,8 +24,6 @@ defmodule MonkeyEx.Lexer do
   end
 
   @spec tokenize(String.t()) :: {Token.t(), String.t()}
-  defp tokenize(<<ch::8, _::binary>> = input) when is_letter(ch), do: read_identifier(input)
-  defp tokenize(<<ch::8, _::binary>> = input) when is_digit(ch), do: read_number(input)
   defp tokenize(<<"==", rest::binary>>), do: {:equal_equal, rest}
   defp tokenize(<<"!=", rest::binary>>), do: {:not_equal, rest}
   defp tokenize(<<";", rest::binary>>), do: {:semicolon, rest}
@@ -43,37 +41,35 @@ defmodule MonkeyEx.Lexer do
   defp tokenize(<<">", rest::binary>>), do: {:greater_than, rest}
   defp tokenize(<<"<", rest::binary>>), do: {:less_than, rest}
   defp tokenize(<<"return", rest::binary>>), do: {:return, rest}
+  defp tokenize(<<"fn", rest::binary>>), do: {:fn, rest}
+  defp tokenize(<<"let", rest::binary>>), do: {:let, rest}
+  defp tokenize(<<"if", rest::binary>>), do: {:if, rest}
+  defp tokenize(<<"else", rest::binary>>), do: {:else, rest}
+  defp tokenize(<<"true", rest::binary>>), do: {true, rest}
+  defp tokenize(<<"false", rest::binary>>), do: {false, rest}
+  defp tokenize(<<ch::8, _::binary>> = input) when is_letter(ch), do: read_identifier(input)
+  defp tokenize(<<ch::8, _::binary>> = input) when is_digit(ch), do: read_number(input)
   defp tokenize(<<ch::8, rest::binary>>), do: {{:illegal, <<ch>>}, rest}
 
-  @spec read_identifier(String.t(), String.t()) :: {Token.t(), String.t()}
+  @spec read_identifier(String.t(), iodata()) :: {Token.t(), String.t()}
   defp read_identifier(input, acc \\ "")
 
   defp read_identifier(<<ch::8, rest::binary>>, acc) when is_letter(ch) do
-    read_identifier(rest, acc <> <<ch>>)
+    read_identifier(rest, [acc | <<ch>>])
   end
 
   defp read_identifier(rest, identifier) do
-    {tokenize_ident(identifier), rest}
+    {{:ident, IO.iodata_to_binary(identifier)}, rest}
   end
 
-  @spec tokenize_ident(String.t()) :: Token.t()
-  defp tokenize_ident("fn"), do: :fn
-  defp tokenize_ident("let"), do: :let
-  defp tokenize_ident("if"), do: :if
-  defp tokenize_ident("else"), do: :else
-  defp tokenize_ident("return"), do: :return
-  defp tokenize_ident("true"), do: true
-  defp tokenize_ident("false"), do: false
-  defp tokenize_ident(identifier), do: {:ident, identifier}
-
-  @spec read_number(String.t(), String.t()) :: {Token.t(), String.t()}
+  @spec read_number(String.t(), iodata()) :: {Token.t(), String.t()}
   defp read_number(input, acc \\ "")
 
   defp read_number(<<ch::8, rest::binary>>, acc) when is_digit(ch) do
-    read_number(rest, acc <> <<ch>>)
+    read_number(rest, [acc | <<ch>>])
   end
 
   defp read_number(rest, number) do
-    {{:int, number}, rest}
+    {{:int, IO.iodata_to_binary(number)}, rest}
   end
 end

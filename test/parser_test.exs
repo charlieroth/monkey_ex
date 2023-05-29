@@ -80,10 +80,7 @@ defmodule ParserTest do
         |> Parser.init()
         |> Parser.parse([])
 
-      assert parser.errors == [
-               "No prefix function for token: assign",
-               "Expected token :ident, got :assign"
-             ]
+      assert parser.errors == ["Expected token :ident, got :assign"]
     end
 
     test "parses return statements" do

@@ -18,7 +18,8 @@ defmodule MonkeyEx.Parser do
     ExpressionStatement,
     PrefixExpression,
     InfixExpression,
-    IfExpression
+    IfExpression,
+    CallExpression
   }
 
   @type statement ::
@@ -197,6 +198,7 @@ defmodule MonkeyEx.Parser do
   defp infix_parse_fns(:asterisk), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:not_equal), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:equal_equal), do: &parse_infix_expression(&1, &2)
+  defp infix_parse_fns(:lparen), do: &parse_call_expression(&1, &2)
   defp infix_parse_fns(_), do: nil
 
   @spec parse_infix_expression(%Parser{}, any()) :: {%Parser{}, %InfixExpression{}}
@@ -375,6 +377,7 @@ defmodule MonkeyEx.Parser do
       | identifiers
     ]
 
+    # TODO(charlieroth): Figure out how to do this without nested case
     case parser.peek_token do
       :comma ->
         parser = next_token(parser)
@@ -384,6 +387,50 @@ defmodule MonkeyEx.Parser do
         case expect_peek(parser, :rparen) do
           {:ok, parser, _} ->
             {parser, identifiers}
+
+          {:error, parser} ->
+            {parser, nil}
+        end
+    end
+  end
+
+  defp parse_call_expression(parser, func) do
+    curr_token = parser.current_token
+    {parser, arguments} = parse_call_expression_args(parser)
+
+    {
+      parser,
+      %CallExpression{
+        token: curr_token,
+        function: func,
+        arguments: Enum.reverse(arguments)
+      }
+    }
+  end
+
+  defp parse_call_expression_args(parser, arguments \\ []) do
+    do_parse_call_expression_args(parser, arguments)
+  end
+
+  defp do_parse_call_expression_args(%Parser{peek_token: :rparen} = parser, [] = arguments) do
+    {next_token(parser), arguments}
+  end
+
+  defp do_parse_call_expression_args(parser, arguments) do
+    parser = next_token(parser)
+    {_, parser, argument} = parse_expression(parser, @precedence.lowest)
+    arguments = [argument | arguments]
+
+    # TODO(charlieroth): Figure out how to do this without nested case
+    case parser.peek_token do
+      :comma ->
+        parser = next_token(parser)
+        do_parse_call_expression_args(parser, arguments)
+
+      _ ->
+        case expect_peek(parser, :rparen) do
+          {:ok, parser, _peek_token} ->
+            {parser, arguments}
 
           {:error, parser} ->
             {parser, nil}

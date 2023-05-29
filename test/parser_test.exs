@@ -659,5 +659,104 @@ defmodule ParserTest do
 
       assert Program.string(program) == "fn(x, y) (x + y)"
     end
+
+    test "call expressions" do
+      inputs = [
+        {
+          [
+            {:ident, "add"},
+            :lparen,
+            {:int, "1"},
+            :comma,
+            {:int, "2"},
+            :asterisk,
+            {:int, "3"},
+            :comma,
+            {:int, "4"},
+            :plus,
+            {:int, "5"},
+            :rparen,
+            :eof
+          ],
+          "add(1, (2 * 3), (4 + 5))"
+        },
+        {
+          [
+            {:ident, "a"},
+            :plus,
+            {:ident, "add"},
+            :lparen,
+            {:ident, "b"},
+            :asterisk,
+            {:ident, "c"},
+            :rparen,
+            :plus,
+            {:ident, "d"},
+            :eof
+          ],
+          "((a + add((b * c))) + d)"
+        },
+        {
+          [
+            {:ident, "add"},
+            :lparen,
+            {:ident, "a"},
+            :comma,
+            {:ident, "b"},
+            :comma,
+            {:int, "1"},
+            :comma,
+            {:int, "2"},
+            :asterisk,
+            {:int, "3"},
+            :comma,
+            {:int, "4"},
+            :plus,
+            {:int, "5"},
+            :comma,
+            {:ident, "add"},
+            :lparen,
+            {:int, "6"},
+            :comma,
+            {:int, "7"},
+            :asterisk,
+            {:int, "8"},
+            :rparen,
+            :rparen,
+            :eof
+          ],
+          "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"
+        },
+        {
+          [
+            {:ident, "add"},
+            :lparen,
+            {:ident, "a"},
+            :plus,
+            {:ident, "b"},
+            :plus,
+            {:ident, "c"},
+            :asterisk,
+            {:ident, "d"},
+            :slash,
+            {:ident, "f"},
+            :plus,
+            {:ident, "g"},
+            :rparen,
+            :eof
+          ],
+          "add((((a + b) + ((c * d) / f)) + g))"
+        }
+      ]
+
+      Enum.each(inputs, fn {tokens, expected_program_string} ->
+        {_parser, program} =
+          tokens
+          |> Parser.init()
+          |> Parser.parse([])
+
+        assert Program.string(program) == expected_program_string
+      end)
+    end
   end
 end

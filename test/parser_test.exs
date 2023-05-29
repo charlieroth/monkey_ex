@@ -586,5 +586,53 @@ defmodule ParserTest do
         assert Program.string(program) == expected_program_string
       end)
     end
+
+    test "if expression" do
+      tokens = [
+        :if,
+        :lparen,
+        {:ident, "x"},
+        :less_than,
+        {:ident, "y"},
+        :rparen,
+        :lbrace,
+        {:ident, "x"},
+        :rbrace,
+        :eof
+      ]
+
+      {_parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      assert Program.string(program) == "if (x < y) x"
+    end
+
+    test "if/else expression" do
+      tokens = [
+        :if,
+        :lparen,
+        {:ident, "x"},
+        :less_than,
+        {:ident, "y"},
+        :rparen,
+        :lbrace,
+        {:ident, "x"},
+        :rbrace,
+        :else,
+        :lbrace,
+        {:ident, "y"},
+        :rbrace,
+        :eof
+      ]
+
+      {_parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      assert Program.string(program) == "if (x < y) x else y"
+    end
   end
 end

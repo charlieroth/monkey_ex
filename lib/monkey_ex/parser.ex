@@ -28,7 +28,11 @@ defmodule MonkeyEx.Parser do
           | %ExpressionStatement{}
           | %BlockStatement{}
 
-  @type expression :: %Identifier{} | %IntegerLiteral{} | %BooleanLiteral{} | %FunctionLiteral{}
+  @type expression ::
+          %Identifier{}
+          | %IntegerLiteral{}
+          | %BooleanLiteral{}
+          | %FunctionLiteral{}
 
   @type t :: %{
           tokens: [Token.t()],
@@ -185,6 +189,7 @@ defmodule MonkeyEx.Parser do
     {add_error(parser, "No prefix function for token: #{parser.current_token}"), nil}
   end
 
+  @spec check_infix(%Parser{}, expression(), any()) :: {%Parser{}, expression()}
   def check_infix(parser, left_expression, precedence) do
     with true <- parser.peek_token != :semicolon,
          true <- precedence < peek_precedence(parser),
@@ -199,6 +204,7 @@ defmodule MonkeyEx.Parser do
     end
   end
 
+  @spec infix_parse_fns(Token.t()) :: fun() | nil
   defp infix_parse_fns(:plus), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:minus), do: &parse_infix_expression(&1, &2)
   defp infix_parse_fns(:slash), do: &parse_infix_expression(&1, &2)
@@ -305,12 +311,15 @@ defmodule MonkeyEx.Parser do
     end
   end
 
+  @spec parse_block_statement(%Parser{}, [statement()]) :: {%Parser{}, %BlockStatement{}}
   defp parse_block_statement(parser, statements \\ []) do
     curr_token = parser.current_token
     parser = next_token(parser)
     do_parse_block_statement(parser, curr_token, statements)
   end
 
+  @spec do_parse_block_statement(%Parser{}, Token.t(), [statement()]) ::
+          {%Parser{}, %BlockStatement{}}
   defp do_parse_block_statement(%Parser{current_token: :rbrace} = parser, token, statements) do
     {
       parser,
@@ -334,6 +343,7 @@ defmodule MonkeyEx.Parser do
     do_parse_block_statement(parser, parser.current_token, statements)
   end
 
+  @spec parse_if_statement(%Parser{}) :: {%Parser{}, %BlockStatement{} | nil}
   defp parse_if_statement(%Parser{peek_token: :else} = parser) do
     parser = next_token(parser)
 
@@ -367,10 +377,12 @@ defmodule MonkeyEx.Parser do
     end
   end
 
+  @spec parse_function_params(%Parser{}, [%Identifier{}]) :: {%Parser{}, [%Identifier{}]}
   defp parse_function_params(parser, identifiers \\ []) do
     do_parse_function_params(parser, identifiers)
   end
 
+  @spec do_parse_function_params(%Parser{}, [%Identifier{}]) :: {%Parser{}, [%Identifier{}]}
   defp do_parse_function_params(%Parser{peek_token: :rparen} = parser, [] = identifiers) do
     {next_token(parser), identifiers}
   end
@@ -400,6 +412,7 @@ defmodule MonkeyEx.Parser do
     end
   end
 
+  @spec parse_call_expression(%Parser{}, %FunctionLiteral{}) :: {%Parser{}, %CallExpression{}}
   defp parse_call_expression(parser, func) do
     curr_token = parser.current_token
     {parser, arguments} = parse_call_expression_args(parser)
@@ -414,10 +427,12 @@ defmodule MonkeyEx.Parser do
     }
   end
 
+  @spec parse_call_expression_args(%Parser{}, [expression()]) :: {%Parser{}, [expression()]}
   defp parse_call_expression_args(parser, arguments \\ []) do
     do_parse_call_expression_args(parser, arguments)
   end
 
+  @spec do_parse_call_expression_args(%Parser{}, [expression()]) :: {%Parser{}, [expression()]}
   defp do_parse_call_expression_args(%Parser{peek_token: :rparen} = parser, [] = arguments) do
     {next_token(parser), arguments}
   end
@@ -481,50 +496,24 @@ defmodule MonkeyEx.Parser do
     {:ok, next_token(parser), peek_token}
   end
 
-  defp expect_peek(%Parser{peek_token: :assign} = parser, :assign) do
-    {:ok, next_token(parser), :assign}
+  defp expect_peek(%Parser{peek_token: peek_token} = parser, expected_token)
+       when peek_token == expected_token do
+    {:ok, next_token(parser), peek_token}
   end
 
-  defp expect_peek(%Parser{peek_token: :rparen} = parser, :rparen) do
-    {:ok, next_token(parser), :rparen}
-  end
-
-  defp expect_peek(%Parser{peek_token: :lparen} = parser, :lparen) do
-    {:ok, next_token(parser), :lparen}
-  end
-
-  defp expect_peek(%Parser{peek_token: :lbrace} = parser, :lbrace) do
-    {:ok, next_token(parser), :lbrace}
-  end
-
-  defp expect_peek(%Parser{peek_token: peek_token} = parser, :ident) do
-    {:error, add_error(parser, "Expected token #{inspect(:ident)}, got #{inspect(peek_token)}"),
+  defp expect_peek(%Parser{peek_token: peek_token} = parser, expected_token) do
+    {:error,
+     add_error(parser, "Expected token #{inspect(expected_token)}, got #{inspect(peek_token)}"),
      nil}
   end
 
-  defp expect_peek(%Parser{peek_token: peek_token} = parser, :assign) do
-    {:error, add_error(parser, "Expected token #{inspect(:assign)}, got #{inspect(peek_token)}"),
-     nil}
-  end
-
-  defp expect_peek(%Parser{peek_token: peek_token} = parser, :rparen) do
-    {:error, add_error(parser, "Expected token #{inspect(:rparen)}, got #{inspect(peek_token)}"),
-     nil}
-  end
-
-  defp expect_peek(%Parser{peek_token: peek_token} = parser, :lparen) do
-    {:error, add_error(parser, "Expected token #{inspect(:lparen)}, got #{inspect(peek_token)}"),
-     nil}
-  end
-
-  defp expect_peek(%Parser{peek_token: peek_token} = parser, :lbrace) do
-    {:error, add_error(parser, "Expected token #{inspect(:lbrace)}, got #{inspect(peek_token)}"),
-     nil}
-  end
-
+  @spec add_error(%Parser{}, String.t()) :: %Parser{}
   defp add_error(%Parser{errors: errors} = parser, msg),
     do: %Parser{parser | errors: [msg | errors]}
 
+  @spec curr_precedence(%Parser{}) :: integer()
   defp curr_precedence(parser), do: Map.get(@precedence, parser.current_token, @precedence.lowest)
+
+  @spec peek_precedence(%Parser{}) :: integer()
   defp peek_precedence(parser), do: Map.get(@precedence, parser.peek_token, @precedence.lowest)
 end

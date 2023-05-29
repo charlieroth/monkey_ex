@@ -80,8 +80,7 @@ defmodule MonkeyEx.Parser do
 
   @spec parse(%Parser{}, [statement()]) :: {%Parser{}, %Program{}}
   def parse(parser, statements) do
-    {parser, program} = parse_program(parser, statements)
-    {parser, program}
+    parse_program(parser, statements)
   end
 
   @spec parse_program(%Parser{}, [statement()]) :: {%Parser{}, %Program{}}

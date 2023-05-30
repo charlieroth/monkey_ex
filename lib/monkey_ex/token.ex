@@ -1,10 +1,15 @@
 defmodule MonkeyEx.Token do
+  @type keyword_token ::
+          :fn
+          | :let
+          | true
+          | false
+          | :if
+          | :else
+          | :return
+
   @type t ::
-          {:illegal, String.t()}
-          | :eof
-          | {:ident, String.t()}
-          | {:int, String.t()}
-          | :assign
+          :assign
           | :plus
           | :minus
           | :asterisk
@@ -20,13 +25,11 @@ defmodule MonkeyEx.Token do
           | :rparen
           | :lbrace
           | :rbrace
-          | :fn
-          | :let
-          | true
-          | false
-          | :if
-          | :else
-          | :return
+          | :eof
+          | keyword_token()
+          | {:illegal, String.t()}
+          | {:ident, String.t()}
+          | {:int, String.t()}
 
   @spec literal(t()) :: String.t()
   def literal({:ident, identifier}), do: identifier

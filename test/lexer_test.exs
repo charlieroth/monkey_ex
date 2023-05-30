@@ -24,6 +24,7 @@ defmodule LexerTest do
       input = """
       let five = 5;
       let ten = 10;
+      let returnfds = 11;
       """
 
       result = input |> Lexer.init()
@@ -38,6 +39,11 @@ defmodule LexerTest do
                {:ident, "ten"},
                :assign,
                {:int, "10"},
+               :semicolon,
+               :let,
+               {:ident, "returnfds"},
+               :assign,
+               {:int, "11"},
                :semicolon,
                :eof
              ]

@@ -40,36 +40,37 @@ defmodule MonkeyEx.Lexer do
   defp tokenize(<<"*", rest::binary>>), do: {:asterisk, rest}
   defp tokenize(<<">", rest::binary>>), do: {:greater_than, rest}
   defp tokenize(<<"<", rest::binary>>), do: {:less_than, rest}
-  defp tokenize(<<"return", rest::binary>>), do: {:return, rest}
-  defp tokenize(<<"fn", rest::binary>>), do: {:fn, rest}
-  defp tokenize(<<"let", rest::binary>>), do: {:let, rest}
-  defp tokenize(<<"if", rest::binary>>), do: {:if, rest}
-  defp tokenize(<<"else", rest::binary>>), do: {:else, rest}
-  defp tokenize(<<"true", rest::binary>>), do: {true, rest}
-  defp tokenize(<<"false", rest::binary>>), do: {false, rest}
-  defp tokenize(<<ch::8, _::binary>> = input) when is_letter(ch), do: read_identifier(input)
-  defp tokenize(<<ch::8, _::binary>> = input) when is_digit(ch), do: read_number(input)
+  defp tokenize(<<ch::8, rest::binary>>) when is_letter(ch), do: read_identifier(rest, <<ch>>)
+  defp tokenize(<<ch::8, rest::binary>>) when is_digit(ch), do: read_number(rest, <<ch>>)
   defp tokenize(<<ch::8, rest::binary>>), do: {{:illegal, <<ch>>}, rest}
 
   @spec read_identifier(String.t(), iodata()) :: {Token.t(), String.t()}
-  defp read_identifier(input, acc \\ "")
-
   defp read_identifier(<<ch::8, rest::binary>>, acc) when is_letter(ch) do
     read_identifier(rest, [acc | <<ch>>])
   end
 
-  defp read_identifier(rest, identifier) do
-    {{:ident, IO.iodata_to_binary(identifier)}, rest}
+  defp read_identifier(rest, acc) do
+    ident = acc |> IO.iodata_to_binary() |> tokenize_word()
+    {ident, rest}
   end
 
   @spec read_number(String.t(), iodata()) :: {Token.t(), String.t()}
-  defp read_number(input, acc \\ "")
-
   defp read_number(<<ch::8, rest::binary>>, acc) when is_digit(ch) do
     read_number(rest, [acc | <<ch>>])
   end
 
   defp read_number(rest, number) do
-    {{:int, IO.iodata_to_binary(number)}, rest}
+    number = number |> IO.iodata_to_binary()
+    {{:int, number}, rest}
   end
+
+  @spec tokenize_word(String.t()) :: Token.keyword_token() | {:ident, String.t()}
+  defp tokenize_word("fn"), do: :fn
+  defp tokenize_word("let"), do: :let
+  defp tokenize_word("if"), do: :if
+  defp tokenize_word("else"), do: :else
+  defp tokenize_word("true"), do: true
+  defp tokenize_word("false"), do: false
+  defp tokenize_word("return"), do: :return
+  defp tokenize_word(ident), do: {:ident, ident}
 end

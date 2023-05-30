@@ -53,6 +53,9 @@ defmodule MonkeyEx.Evaluator do
       "!" ->
         eval_bang_operator_expression(expression)
 
+      "-" ->
+        eval_minus_operator_expression(expression)
+
       _ ->
         # TODO(charlieroth): Should this return `nil`? Error handling?
         nil
@@ -69,6 +72,16 @@ defmodule MonkeyEx.Evaluator do
 
       _ ->
         %Object.Boolean{value: false}
+    end
+  end
+
+  defp eval_minus_operator_expression(expression) do
+    case expression do
+      %Object.Integer{} ->
+        %Object.Integer{value: -expression.value}
+
+      _ ->
+        raise "unknown operator: -#{Object.type(expression)}"
     end
   end
 end

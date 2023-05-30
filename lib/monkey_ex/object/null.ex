@@ -5,6 +5,8 @@ defmodule MonkeyEx.Object.Null do
 
   alias MonkeyEx.Object
 
+  defstruct value: "null"
+
   defimpl Object, for: __MODULE__ do
     def type(_null), do: "null"
 

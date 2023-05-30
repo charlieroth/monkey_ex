@@ -39,5 +39,27 @@ defmodule EvaluatorTest do
         assert evaluated == expected
       end)
     end
+
+    test "evaluate 'bang' operator" do
+      inputs = [
+        {"!true", false},
+        {"!false", true},
+        {"!5", false},
+        {"!!true", true},
+        {"!!false", false},
+        {"!!5", true}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        evaluated = Evaluator.eval(program)
+        assert evaluated.value == expected
+      end)
+    end
   end
 end

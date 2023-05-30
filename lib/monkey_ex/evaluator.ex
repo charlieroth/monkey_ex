@@ -34,6 +34,12 @@ defmodule MonkeyEx.Evaluator do
     eval_prefix_expression(ast_node.operator, right_expression)
   end
 
+  def eval(%Ast.InfixExpression{} = ast_node) do
+    left_expression = eval(ast_node.left)
+    right_expression = eval(ast_node.right)
+    eval_infix_expression(left_expression, ast_node.operator, right_expression)
+  end
+
   defp eval_program(program, last_eval \\ nil) do
     do_eval_program(program.statements, last_eval)
   end
@@ -48,13 +54,30 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
-  defp eval_prefix_expression(operator, expression) do
+  defp eval_infix_expression(left, operator, right) do
+    case operator do
+      "+" -> %Object.Integer{value: left.value + right.value}
+      "-" -> %Object.Integer{value: left.value - right.value}
+      "*" -> %Object.Integer{value: left.value * right.value}
+      "/" -> %Object.Integer{value: left.value / right.value}
+      ">" -> %Object.Boolean{value: left.value > right.value}
+      "<" -> %Object.Boolean{value: left.value < right.value}
+      "==" -> %Object.Boolean{value: left.value == right.value}
+      "!=" -> %Object.Boolean{value: left.value != right.value}
+      _ -> raise "Invalid infix operator: #{operator}"
+    end
+  end
+
+  # defp eval_infix_expression(_left, _operator, _right),
+  #   do: raise("Unsupported infix expression evaluation")
+
+  defp eval_prefix_expression(operator, right) do
     case operator do
       "!" ->
-        eval_bang_operator_expression(expression)
+        eval_bang_operator_expression(right)
 
       "-" ->
-        eval_minus_operator_expression(expression)
+        eval_minus_operator_expression(right)
 
       _ ->
         # TODO(charlieroth): Should this return `nil`? Error handling?
@@ -62,8 +85,8 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
-  defp eval_bang_operator_expression(expression) do
-    case expression do
+  defp eval_bang_operator_expression(right) do
+    case right do
       %Object.Boolean{value: true} ->
         %Object.Boolean{value: false}
 
@@ -75,13 +98,13 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
-  defp eval_minus_operator_expression(expression) do
-    case expression do
+  defp eval_minus_operator_expression(right) do
+    case right do
       %Object.Integer{} ->
-        %Object.Integer{value: -expression.value}
+        %Object.Integer{value: -right.value}
 
       _ ->
-        raise "unknown operator: -#{Object.type(expression)}"
+        raise "unknown operator: -#{Object.type(right)}"
     end
   end
 end

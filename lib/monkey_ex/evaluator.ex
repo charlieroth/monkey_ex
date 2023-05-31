@@ -1,4 +1,5 @@
 defmodule MonkeyEx.Evaluator do
+  alias MonkeyEx.Ast.IfExpression
   alias MonkeyEx.Ast
   alias MonkeyEx.Object
 
@@ -15,6 +16,14 @@ defmodule MonkeyEx.Evaluator do
 
   def eval(%Ast.Program{} = ast_node) do
     eval_program(ast_node)
+  end
+
+  def eval(%Ast.BlockStatement{} = ast_node) do
+    eval_block_statement(ast_node)
+  end
+
+  def eval(%Ast.IfExpression{} = ast_node) do
+    eval_if_expression(ast_node)
   end
 
   def eval(%Ast.ExpressionStatement{} = ast_node) do
@@ -50,6 +59,8 @@ defmodule MonkeyEx.Evaluator do
     value = eval(statement)
 
     case value do
+      # %ReturnValue{} -> value.value
+      # %Error{} -> value
       _ -> do_eval_program(rest, value)
     end
   end
@@ -68,9 +79,6 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
-  # defp eval_infix_expression(_left, _operator, _right),
-  #   do: raise("Unsupported infix expression evaluation")
-
   defp eval_prefix_expression(operator, right) do
     case operator do
       "!" ->
@@ -82,6 +90,34 @@ defmodule MonkeyEx.Evaluator do
       _ ->
         # TODO(charlieroth): Should this return `nil`? Error handling?
         nil
+    end
+  end
+
+  defp eval_block_statement(block, last_eval \\ nil) do
+    do_eval_block_statement(block.statements, last_eval)
+  end
+
+  defp do_eval_block_statement([], last_eval), do: last_eval
+
+  defp do_eval_block_statement([statement | rest], _last_eval) do
+    value = eval(statement)
+
+    case value do
+      # %ReturnValue{} -> value
+      # %Error{} -> value
+      _ -> do_eval_block_statement(rest, value)
+    end
+  end
+
+  @spec eval_if_expression(%IfExpression{}) :: any()
+  defp eval_if_expression(expression) do
+    evaluated_condition = eval(expression.condition)
+
+    cond do
+      # is_error(evaluated_condition) -> condition
+      is_truthy(evaluated_condition) -> eval(expression.consequence)
+      expression.alternative != nil -> eval(expression.alternative)
+      true -> %Object.Null{}
     end
   end
 
@@ -105,6 +141,15 @@ defmodule MonkeyEx.Evaluator do
 
       _ ->
         raise "unknown operator: -#{Object.type(right)}"
+    end
+  end
+
+  defp is_truthy(object) do
+    case object do
+      %Object.Boolean{value: true} -> true
+      %Object.Boolean{value: false} -> false
+      %Object.Null{} -> false
+      _ -> true
     end
   end
 end

@@ -155,5 +155,28 @@ defmodule EvaluatorTest do
         assert evaluated.value == expected
       end)
     end
+
+    test "evaluate if/else expressions" do
+      inputs = [
+        {"if (true) { 10 }", 10},
+        {"if (false) { 10 }", nil},
+        {"if (1) { 10 }", 10},
+        {"if (1 < 2) { 10 }", 10},
+        {"if (1 > 2) { 10 }", nil},
+        {"if (1 > 2) { 10 } else { 20 }", 20},
+        {"if (1 < 2) { 10 } else { 20 }", 10}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        evaluated = Evaluator.eval(program)
+        assert evaluated.value == expected
+      end)
+    end
   end
 end

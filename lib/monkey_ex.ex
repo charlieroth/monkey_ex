@@ -3,7 +3,7 @@ defmodule MonkeyEx do
 
   alias MonkeyEx.Parser
   alias MonkeyEx.Lexer
-  alias MonkeyEx.Ast.Program
+  alias MonkeyEx.Evaluator
   require Logger
 
   def run(input) do
@@ -23,7 +23,8 @@ defmodule MonkeyEx do
 
       Logger.error(error_msgs)
     else
-      Program.string(program)
+      evaluated = Evaluator.eval(program)
+      evaluated.value
     end
   end
 end

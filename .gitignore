@@ -26,3 +26,5 @@ mirlang-*.tar
 /tmp/
 
 .elixir_ls/
+
+NOTES.md

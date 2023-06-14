@@ -93,8 +93,8 @@ defmodule MonkeyEx.Parser do
     }
   end
 
-  defp parse_program(parser, statements) do
-    {parser, statement} = parse_statement(parser.current_token, parser)
+  defp parse_program(%Parser{} = parser, statements) do
+    {parser, statement} = parse_statement(parser)
 
     statements =
       case statement do
@@ -110,10 +110,14 @@ defmodule MonkeyEx.Parser do
     end
   end
 
-  @spec parse_statement(Token.t(), %Parser{}) :: {%Parser{}, statement() | nil}
-  defp parse_statement(:let, parser), do: parse_let_statement(parser)
-  defp parse_statement(:return, parser), do: parse_return_statement(parser)
-  defp parse_statement(_, parser), do: parse_expression_statement(parser)
+  @spec parse_statement(%Parser{}) :: {%Parser{}, statement() | nil}
+  defp parse_statement(parser) do
+    case parser.current_token do
+      :let -> parse_let_statement(parser)
+      :return -> parse_return_statement(parser)
+      _ -> parse_expression_statement(parser)
+    end
+  end
 
   @spec parse_let_statement(%Parser{}) :: {%Parser{}, %LetStatement{} | nil}
   defp parse_let_statement(parser) do
@@ -152,11 +156,8 @@ defmodule MonkeyEx.Parser do
   defp parse_expression_statement(parser) do
     curr_token = parser.current_token
     {_, parser, expression} = parse_expression(parser, @precedence.lowest)
-
-    {
-      skip_semicolon(parser),
-      %ExpressionStatement{token: curr_token, expression: expression}
-    }
+    parser = skip_semicolon(parser)
+    {parser, %ExpressionStatement{token: curr_token, expression: expression}}
   end
 
   @spec parse_expression(%Parser{}, any()) ::
@@ -289,11 +290,11 @@ defmodule MonkeyEx.Parser do
   defp parse_if_expression(parser) do
     curr_token = parser.current_token
 
-    with {:ok, parser, _} <- expect_peek(parser, :lparen),
+    with {:ok, parser, _peek_token} <- expect_peek(parser, :lparen),
          parser <- next_token(parser),
          {:ok, parser, condition_expression} <- parse_expression(parser, @precedence.lowest),
-         {:ok, parser, _} <- expect_peek(parser, :rparen),
-         {:ok, parser, _} <- expect_peek(parser, :lbrace) do
+         {:ok, parser, _peek_token} <- expect_peek(parser, :rparen),
+         {:ok, parser, _peek_token} <- expect_peek(parser, :lbrace) do
       {parser, consequence_expression} = parse_block_statement(parser)
       {parser, alternative_expression} = parse_if_statement(parser)
 
@@ -330,7 +331,7 @@ defmodule MonkeyEx.Parser do
   end
 
   defp do_parse_block_statement(%Parser{} = parser, token, statements) do
-    {parser, statement} = parse_statement(token, parser)
+    {parser, statement} = parse_statement(parser)
 
     statements =
       case statement do
@@ -339,7 +340,7 @@ defmodule MonkeyEx.Parser do
       end
 
     parser = next_token(parser)
-    do_parse_block_statement(parser, parser.current_token, statements)
+    do_parse_block_statement(parser, token, statements)
   end
 
   @spec parse_if_statement(%Parser{}) :: {%Parser{}, %BlockStatement{} | nil}

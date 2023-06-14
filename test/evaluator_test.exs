@@ -178,5 +178,26 @@ defmodule EvaluatorTest do
         assert evaluated.value == expected
       end)
     end
+
+    test "evaluate return statements" do
+      inputs = [
+        {"return 10;", 10},
+        {"return 10; 9;", 10},
+        {"return 2 * 5; 9;", 10},
+        {"9; return 2 * 5; 9;", 10},
+        {"if (10 > 1) { if (10 > 1) { return 10; } return 1; }", 10}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        evaluated = Evaluator.eval(program)
+        assert evaluated.value == expected
+      end)
+    end
   end
 end

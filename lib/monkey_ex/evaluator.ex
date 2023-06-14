@@ -1,7 +1,7 @@
 defmodule MonkeyEx.Evaluator do
-  alias MonkeyEx.Ast.IfExpression
   alias MonkeyEx.Ast
   alias MonkeyEx.Object
+  require Logger
 
   @type ast_nodes ::
           %Ast.Program{}
@@ -28,6 +28,18 @@ defmodule MonkeyEx.Evaluator do
 
   def eval(%Ast.ExpressionStatement{} = ast_node) do
     eval(ast_node.expression)
+  end
+
+  def eval(%Ast.ReturnStatement{} = ast_node) do
+    value = eval(ast_node.return_value)
+
+    cond do
+      is_error(value) ->
+        value
+
+      true ->
+        %Object.ReturnValue{value: value}
+    end
   end
 
   def eval(%Ast.IntegerLiteral{} = ast_node) do
@@ -59,23 +71,42 @@ defmodule MonkeyEx.Evaluator do
     value = eval(statement)
 
     case value do
-      # %ReturnValue{} -> value.value
-      # %Error{} -> value
+      %Object.ReturnValue{} -> value.value
+      %Object.Error{} -> value
       _ -> do_eval_program(rest, value)
     end
   end
 
   defp eval_infix_expression(left, operator, right) do
     case operator do
-      "+" -> %Object.Integer{value: left.value + right.value}
-      "-" -> %Object.Integer{value: left.value - right.value}
-      "*" -> %Object.Integer{value: left.value * right.value}
-      "/" -> %Object.Integer{value: left.value / right.value}
-      ">" -> %Object.Boolean{value: left.value > right.value}
-      "<" -> %Object.Boolean{value: left.value < right.value}
-      "==" -> %Object.Boolean{value: left.value == right.value}
-      "!=" -> %Object.Boolean{value: left.value != right.value}
-      _ -> raise "Invalid infix operator: #{operator}"
+      "+" ->
+        %Object.Integer{value: left.value + right.value}
+
+      "-" ->
+        %Object.Integer{value: left.value - right.value}
+
+      "*" ->
+        %Object.Integer{value: left.value * right.value}
+
+      "/" ->
+        %Object.Integer{value: left.value / right.value}
+
+      ">" ->
+        %Object.Boolean{value: left.value > right.value}
+
+      "<" ->
+        %Object.Boolean{value: left.value < right.value}
+
+      "==" ->
+        %Object.Boolean{value: left.value == right.value}
+
+      "!=" ->
+        %Object.Boolean{value: left.value != right.value}
+
+      _ ->
+        %Object.Error{
+          message: "unknown operator: #{Object.type(left)}#{operator}#{Object.type(right)}"
+        }
     end
   end
 
@@ -88,8 +119,7 @@ defmodule MonkeyEx.Evaluator do
         eval_minus_operator_expression(right)
 
       _ ->
-        # TODO(charlieroth): Should this return `nil`? Error handling?
-        nil
+        %Object.Error{message: "unknown operator: #{operator}#{Object.type(right)}"}
     end
   end
 
@@ -103,21 +133,28 @@ defmodule MonkeyEx.Evaluator do
     value = eval(statement)
 
     case value do
-      # %ReturnValue{} -> value
-      # %Error{} -> value
+      %Object.Error{} -> value
+      %Object.ReturnValue{} -> value
       _ -> do_eval_block_statement(rest, value)
     end
   end
 
-  @spec eval_if_expression(%IfExpression{}) :: any()
+  @spec eval_if_expression(%Ast.IfExpression{}) :: any()
   defp eval_if_expression(expression) do
     evaluated_condition = eval(expression.condition)
 
     cond do
-      # is_error(evaluated_condition) -> condition
-      is_truthy(evaluated_condition) -> eval(expression.consequence)
-      expression.alternative != nil -> eval(expression.alternative)
-      true -> %Object.Null{}
+      is_error(evaluated_condition) ->
+        evaluated_condition
+
+      is_truthy(evaluated_condition) ->
+        eval(expression.consequence)
+
+      expression.alternative != nil ->
+        eval(expression.alternative)
+
+      true ->
+        %Object.Null{}
     end
   end
 
@@ -140,7 +177,7 @@ defmodule MonkeyEx.Evaluator do
         %Object.Integer{value: -right.value}
 
       _ ->
-        raise "unknown operator: -#{Object.type(right)}"
+        %Object.Error{message: "unknown operator: -#{Object.type(right)}"}
     end
   end
 
@@ -152,4 +189,7 @@ defmodule MonkeyEx.Evaluator do
       _ -> true
     end
   end
+
+  defp is_error(%Object.Error{}), do: true
+  defp is_error(_), do: false
 end

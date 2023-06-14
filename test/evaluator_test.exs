@@ -199,5 +199,29 @@ defmodule EvaluatorTest do
         assert evaluated.value == expected
       end)
     end
+
+    test "evalutator error handling" do
+      inputs = [
+        {"5 + true;", "type mismatch: integer + boolean"},
+        {"5 + true; 5;", "type mismatch: integer + boolean"},
+        {"-true", "unknown operator: -boolean"},
+        {"true + false", "unknown operator: boolean + boolean"},
+        {"5; true + false; 5", "unknown operator: boolean + boolean"},
+        {"if (10 > 1) { true + false; }", "unknown operator: boolean + boolean"},
+        {"if (10 > 1) { if (10 > 1) { return true + false; } return 1; }",
+         "unknown operator: boolean + boolean"}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        evaluated = Evaluator.eval(program)
+        assert evaluated.message == expected
+      end)
+    end
   end
 end

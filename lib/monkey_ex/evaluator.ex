@@ -58,7 +58,17 @@ defmodule MonkeyEx.Evaluator do
   def eval(%Ast.InfixExpression{} = ast_node) do
     left_expression = eval(ast_node.left)
     right_expression = eval(ast_node.right)
-    eval_infix_expression(left_expression, ast_node.operator, right_expression)
+
+    cond do
+      is_error(left_expression) ->
+        left_expression
+
+      is_error(right_expression) ->
+        right_expression
+
+      true ->
+        eval_infix_expression(left_expression, ast_node.operator, right_expression)
+    end
   end
 
   defp eval_program(program, last_eval \\ nil) do
@@ -77,7 +87,32 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
+  defp eval_infix_expression(%Object.Integer{} = left, operator, %Object.Integer{} = right) do
+    eval_integer_infix_expression(left, operator, right)
+  end
+
+  # defp eval_infix_expression(%Object.String{} = left, operator, %Object.String{}) do
+  #   eval_string_infix_expression(left, operator, right)
+  # end
+
+  defp eval_infix_expression(left, "==", right),
+    do: %Object.Boolean{value: left.value == right.value}
+
+  defp eval_infix_expression(left, "!=", right),
+    do: %Object.Boolean{value: left.value != right.value}
+
   defp eval_infix_expression(left, operator, right) do
+    left_type = Object.type(left)
+    right_type = Object.type(right)
+
+    if left_type != right_type do
+      %Object.Error{message: "type mismatch: #{left_type} #{operator} #{right_type}"}
+    else
+      %Object.Error{message: "unknown operator: #{left_type} #{operator} #{right_type}"}
+    end
+  end
+
+  defp eval_integer_infix_expression(left, operator, right) do
     case operator do
       "+" ->
         %Object.Integer{value: left.value + right.value}

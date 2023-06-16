@@ -1,9 +1,7 @@
 defmodule MonkeyEx do
   @moduledoc false
 
-  alias MonkeyEx.Parser
-  alias MonkeyEx.Lexer
-  alias MonkeyEx.Evaluator
+  alias MonkeyEx.{Lexer, Parser, Evaluator, Environment}
   require Logger
 
   def run(input) do
@@ -23,7 +21,7 @@ defmodule MonkeyEx do
 
       Logger.error(error_msgs)
     else
-      evaluated = Evaluator.eval(program)
+      evaluated = Evaluator.eval(program, Environment.new())
       evaluated.value
     end
   end

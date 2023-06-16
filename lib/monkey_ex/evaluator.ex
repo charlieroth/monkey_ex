@@ -1,6 +1,5 @@
 defmodule MonkeyEx.Evaluator do
-  alias MonkeyEx.Ast
-  alias MonkeyEx.Object
+  alias MonkeyEx.{Ast, Object, Environment}
   require Logger
 
   @type ast_nodes ::
@@ -14,76 +13,101 @@ defmodule MonkeyEx.Evaluator do
           %Object.Integer{}
           | %Object.Boolean{}
 
-  def eval(%Ast.Program{} = ast_node) do
-    eval_program(ast_node)
+  def eval(%Ast.Program{} = ast_node, %Environment{} = env) do
+    eval_program(ast_node, env)
   end
 
-  def eval(%Ast.BlockStatement{} = ast_node) do
-    eval_block_statement(ast_node)
+  def eval(%Ast.BlockStatement{} = ast_node, %Environment{} = env) do
+    eval_block_statement(ast_node, env)
   end
 
-  def eval(%Ast.IfExpression{} = ast_node) do
-    eval_if_expression(ast_node)
+  def eval(%Ast.ExpressionStatement{} = ast_node, %Environment{} = env) do
+    eval(ast_node.expression, env)
   end
 
-  def eval(%Ast.ExpressionStatement{} = ast_node) do
-    eval(ast_node.expression)
-  end
-
-  def eval(%Ast.ReturnStatement{} = ast_node) do
-    value = eval(ast_node.return_value)
+  def eval(%Ast.ReturnStatement{} = ast_node, %Environment{} = env) do
+    {value, env} = eval(ast_node.return_value, env)
 
     cond do
       is_error(value) ->
-        value
+        {value, env}
 
       true ->
-        %Object.ReturnValue{value: value}
+        {%Object.ReturnValue{value: value}, env}
     end
   end
 
-  def eval(%Ast.IntegerLiteral{} = ast_node) do
-    %Object.Integer{value: ast_node.value}
+  def eval(%Ast.LetStatement{} = ast_node, %Environment{} = env) do
+    {value, env} = eval(ast_node.value, env)
+
+    cond do
+      is_error(value) ->
+        {value, env}
+
+      true ->
+        {value, Environment.set(env, ast_node.name.value, value)}
+    end
   end
 
-  def eval(%Ast.BooleanLiteral{} = ast_node) do
-    %Object.Boolean{value: ast_node.value}
+  def eval(%Ast.Identifier{} = ast_node, %Environment{} = env) do
+    value = Environment.get(env, ast_node.value)
+
+    cond do
+      value -> {value, env}
+      true -> {%Object.Error{message: "identifier not found: #{ast_node.value}"}, env}
+    end
   end
 
-  def eval(%Ast.PrefixExpression{} = ast_node) do
-    right_expression = eval(ast_node.right)
-    eval_prefix_expression(ast_node.operator, right_expression)
+  def eval(%Ast.IntegerLiteral{} = ast_node, %Environment{} = env) do
+    {%Object.Integer{value: ast_node.value}, env}
   end
 
-  def eval(%Ast.InfixExpression{} = ast_node) do
-    left_expression = eval(ast_node.left)
-    right_expression = eval(ast_node.right)
+  def eval(%Ast.BooleanLiteral{} = ast_node, %Environment{} = env) do
+    {%Object.Boolean{value: ast_node.value}, env}
+  end
+
+  def eval(%Ast.IfExpression{} = ast_node, %Environment{} = env) do
+    eval_if_expression(ast_node, env)
+  end
+
+  def eval(%Ast.PrefixExpression{} = ast_node, %Environment{} = env) do
+    {right_expression, env} = eval(ast_node.right, env)
+
+    cond do
+      is_error(right_expression) -> {right_expression, env}
+      true -> {eval_prefix_expression(ast_node.operator, right_expression), env}
+    end
+  end
+
+  def eval(%Ast.InfixExpression{} = ast_node, %Environment{} = env) do
+    {left_expression, env} = eval(ast_node.left, env)
+    {right_expression, env} = eval(ast_node.right, env)
 
     cond do
       is_error(left_expression) ->
-        left_expression
+        {left_expression, env}
 
       is_error(right_expression) ->
-        right_expression
+        {right_expression, env}
 
       true ->
-        eval_infix_expression(left_expression, ast_node.operator, right_expression)
+        {eval_infix_expression(left_expression, ast_node.operator, right_expression), env}
     end
   end
 
-  defp eval_program(program, last_eval \\ nil) do
-    do_eval_program(program.statements, last_eval)
+  defp eval_program(program, env, last_eval \\ nil) do
+    do_eval_program(program.statements, env, last_eval)
   end
 
-  defp do_eval_program([], last_eval), do: last_eval
+  defp do_eval_program([], _env, last_eval), do: last_eval
 
-  defp do_eval_program([statement | rest], _last_eval) do
-    value = eval(statement)
+  defp do_eval_program([statement | rest], env, _last_eval) do
+    {value, env} = eval(statement, env)
 
     case value do
-      %Object.ReturnValue{} -> value.value
-      %Object.Error{} -> value
-      _ -> do_eval_program(rest, value)
+      %Object.ReturnValue{} -> {value.value, env}
+      %Object.Error{} -> {value, env}
+      _ -> do_eval_program(rest, env, value)
     end
   end
 
@@ -158,38 +182,38 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
-  defp eval_block_statement(block, last_eval \\ nil) do
-    do_eval_block_statement(block.statements, last_eval)
+  defp eval_block_statement(block, env, last_eval \\ nil) do
+    do_eval_block_statement(block.statements, env, last_eval)
   end
 
-  defp do_eval_block_statement([], last_eval), do: last_eval
+  defp do_eval_block_statement([], env, last_eval), do: {last_eval, env}
 
-  defp do_eval_block_statement([statement | rest], _last_eval) do
-    value = eval(statement)
+  defp do_eval_block_statement([statement | rest], env, _last_eval) do
+    {value, env} = eval(statement, env)
 
     case value do
-      %Object.Error{} -> value
-      %Object.ReturnValue{} -> value
-      _ -> do_eval_block_statement(rest, value)
+      %Object.Error{} -> {value, env}
+      %Object.ReturnValue{} -> {value, env}
+      _ -> do_eval_block_statement(rest, env, value)
     end
   end
 
-  @spec eval_if_expression(%Ast.IfExpression{}) :: any()
-  defp eval_if_expression(expression) do
-    evaluated_condition = eval(expression.condition)
+  @spec eval_if_expression(%Ast.IfExpression{}, %Environment{}) :: any()
+  defp eval_if_expression(if_expression, env) do
+    {evaluated_condition, env} = eval(if_expression.condition, env)
 
     cond do
       is_error(evaluated_condition) ->
-        evaluated_condition
+        {evaluated_condition, env}
 
       is_truthy(evaluated_condition) ->
-        eval(expression.consequence)
+        eval(if_expression.consequence, env)
 
-      expression.alternative != nil ->
-        eval(expression.alternative)
+      if_expression.alternative != nil ->
+        eval(if_expression.alternative, env)
 
       true ->
-        %Object.Null{}
+        {%Object.Null{}, env}
     end
   end
 

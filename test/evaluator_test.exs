@@ -1,6 +1,6 @@
 defmodule EvaluatorTest do
   use ExUnit.Case
-  alias MonkeyEx.{Evaluator, Parser, Lexer}
+  alias MonkeyEx.{Evaluator, Parser, Lexer, Environment}
   alias MonkeyEx.Object
 
   describe "eval/1" do
@@ -17,7 +17,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated == expected
       end)
     end
@@ -35,7 +35,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated == expected
       end)
     end
@@ -57,7 +57,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -77,7 +77,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -104,7 +104,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -126,7 +126,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -151,7 +151,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -174,7 +174,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -195,7 +195,27 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
+        assert evaluated.value == expected
+      end)
+    end
+
+    test "let statements" do
+      inputs = [
+        {"let a = 5; a;", 5},
+        {"let a = 5 * 5; a;", 25},
+        {"let a = 5; let b = a; b;", 5},
+        {"let a = 5; let b = a; let c = a + b + 5; c;", 15}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        evaluated = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -209,7 +229,8 @@ defmodule EvaluatorTest do
         {"5; true + false; 5", "unknown operator: boolean + boolean"},
         {"if (10 > 1) { true + false; }", "unknown operator: boolean + boolean"},
         {"if (10 > 1) { if (10 > 1) { return true + false; } return 1; }",
-         "unknown operator: boolean + boolean"}
+         "unknown operator: boolean + boolean"},
+        {"foobar", "identifier not found: foobar"}
       ]
 
       Enum.each(inputs, fn {input, expected} ->
@@ -219,7 +240,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program)
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.message == expected
       end)
     end

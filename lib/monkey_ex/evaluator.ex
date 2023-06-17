@@ -99,7 +99,7 @@ defmodule MonkeyEx.Evaluator do
     do_eval_program(program.statements, env, last_eval)
   end
 
-  defp do_eval_program([], _env, last_eval), do: last_eval
+  defp do_eval_program([], env, last_eval), do: {last_eval, env}
 
   defp do_eval_program([statement | rest], env, _last_eval) do
     {value, env} = eval(statement, env)

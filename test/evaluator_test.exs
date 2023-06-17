@@ -17,7 +17,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated == expected
       end)
     end
@@ -35,7 +35,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated == expected
       end)
     end
@@ -57,7 +57,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -77,7 +77,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -104,7 +104,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -126,7 +126,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -151,7 +151,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -174,7 +174,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end
@@ -215,7 +215,7 @@ defmodule EvaluatorTest do
           |> Parser.init()
           |> Parser.parse([])
 
-        evaluated = Evaluator.eval(program, Environment.new())
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
         assert evaluated.value == expected
       end)
     end

@@ -66,6 +66,28 @@ defmodule MonkeyEx.Evaluator do
     {%Object.Boolean{value: ast_node.value}, env}
   end
 
+  def eval(%Ast.FunctionLiteral{} = ast_node, %Environment{} = env) do
+    {%Object.Function{parameters: ast_node.parameters, body: ast_node.body, env: env}, env}
+  end
+
+  def eval(%Ast.CallExpression{} = ast_node, %Environment{} = env) do
+    {function, env} = eval(ast_node.function, env)
+
+    case function do
+      %Object.Error{} ->
+        {function, env}
+
+      _ ->
+        {args, env} = eval_function_args(ast_node.arguments, env)
+
+        if length(args) == 1 && is_error(Enum.at(args, 0)) do
+          {Enum.at(args, 0), env}
+        else
+          {apply_function(function, args), env}
+        end
+    end
+  end
+
   def eval(%Ast.IfExpression{} = ast_node, %Environment{} = env) do
     eval_if_expression(ast_node, env)
   end
@@ -111,6 +133,42 @@ defmodule MonkeyEx.Evaluator do
     end
   end
 
+  defp eval_function_args(args, env) do
+    {evaluated, env} =
+      Enum.reduce_while(args, {[], env}, fn arg, {acc, env} ->
+        {value, env} = eval(arg, env)
+
+        case value do
+          %Object.Error{} ->
+            {:halt, {value, env}}
+
+          _ ->
+            {:cont, {[value | acc], env}}
+        end
+      end)
+
+    {Enum.reverse(evaluated), env}
+  end
+
+  defp apply_function(%Object.Function{} = function, args) do
+    extended_env = extended_function_env(function, args)
+    {value, _env} = eval(function.body, extended_env)
+    unwrap(value)
+  end
+
+  defp apply_function(function, _args),
+    do: %Object.Error{message: "not a function: #{Object.type(function)}"}
+
+  defp extended_function_env(function, args) do
+    env = Environment.enclose(function.env)
+
+    function.parameters
+    |> Enum.zip(args)
+    |> List.foldl(env, fn {identifier, arg}, env ->
+      Environment.set(env, identifier.value, arg)
+    end)
+  end
+
   defp eval_infix_expression(%Object.Integer{} = left, operator, %Object.Integer{} = right) do
     eval_integer_infix_expression(left, operator, right)
   end
@@ -148,7 +206,7 @@ defmodule MonkeyEx.Evaluator do
         %Object.Integer{value: left.value * right.value}
 
       "/" ->
-        %Object.Integer{value: left.value / right.value}
+        %Object.Integer{value: round(left.value / right.value)}
 
       ">" ->
         %Object.Boolean{value: left.value > right.value}
@@ -239,6 +297,9 @@ defmodule MonkeyEx.Evaluator do
         %Object.Error{message: "unknown operator: -#{Object.type(right)}"}
     end
   end
+
+  defp unwrap(%Object.ReturnValue{} = obj), do: obj.value
+  defp unwrap(obj), do: obj
 
   defp is_truthy(object) do
     case object do

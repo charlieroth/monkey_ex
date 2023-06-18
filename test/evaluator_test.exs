@@ -244,5 +244,27 @@ defmodule EvaluatorTest do
         assert evaluated.message == expected
       end)
     end
+
+    test "evaluate functions" do
+      inputs = [
+        {"let identity = fn(x) { x; }; identity(5);", 5},
+        {"let identity = fn(x) { return x; }; identity(5);", 5},
+        {"let double = fn(x) { x * 2; }; double(5);", 10},
+        {"let add = fn(x, y) { return x + y; }; add(5, 5);", 10},
+        {"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
+        {"fn(x) { x; }(5)", 5}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
+        assert evaluated.value == expected
+      end)
+    end
   end
 end

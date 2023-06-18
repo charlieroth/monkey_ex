@@ -266,5 +266,32 @@ defmodule EvaluatorTest do
         assert evaluated.value == expected
       end)
     end
+
+    test "evaluate closures" do
+      inputs = [
+        {
+          """
+          let newAdder = fn(x) {
+            fn(y) { x + y };
+          };
+
+          let addTwo = newAdder(2);
+          addTwo(2);
+          """,
+          4
+        }
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
+        assert evaluated.value == expected
+      end)
+    end
   end
 end

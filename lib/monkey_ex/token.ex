@@ -30,6 +30,7 @@ defmodule MonkeyEx.Token do
           | {:illegal, String.t()}
           | {:ident, String.t()}
           | {:int, String.t()}
+          | {:string, String.t()}
 
   @spec literal(t()) :: String.t()
   def literal({:ident, identifier}), do: identifier

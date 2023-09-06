@@ -1,23 +1,22 @@
 defmodule MonkeyEx.Lexer do
-  @moduledoc false
+  @moduledoc """
+  TODO
+  """
+
   alias MonkeyEx.Token
 
   defguardp is_whitespace(ch) when ch in ~c[ \n\t]
   defguardp is_letter(ch) when ch in ?a..?z or ch in ?A..?Z or ch == ?_
   defguardp is_digit(ch) when ch in ?0..?9
+  defguardp is_quote(ch) when ch == ?"
 
   @spec init(String.t()) :: [Token.t()]
   def init(input) when is_binary(input), do: lex(input, [])
 
   @spec lex(String.t(), [Token.t()]) :: [Token.t()]
   defp lex(<<>>, tokens), do: [:eof | tokens] |> Enum.reverse()
+  defp lex(<<ch::8, rest::binary>>, tokens) when is_whitespace(ch), do: lex(rest, tokens)
 
-  # Ignore whitespace
-  defp lex(<<ch::8, rest::binary>>, tokens) when is_whitespace(ch) do
-    lex(rest, tokens)
-  end
-
-  # Recursively tokenize/lex the input string
   defp lex(input, tokens) do
     {token, rest} = tokenize(input)
     lex(rest, [token | tokens])
@@ -40,9 +39,16 @@ defmodule MonkeyEx.Lexer do
   defp tokenize(<<"*", rest::binary>>), do: {:asterisk, rest}
   defp tokenize(<<">", rest::binary>>), do: {:greater_than, rest}
   defp tokenize(<<"<", rest::binary>>), do: {:less_than, rest}
+  defp tokenize(<<ch::8, rest::binary>>) when is_quote(ch), do: read_string(rest)
   defp tokenize(<<ch::8, rest::binary>>) when is_letter(ch), do: read_identifier(rest, <<ch>>)
   defp tokenize(<<ch::8, rest::binary>>) when is_digit(ch), do: read_number(rest, <<ch>>)
   defp tokenize(<<ch::8, rest::binary>>), do: {{:illegal, <<ch>>}, rest}
+
+  defp read_string(rest) do
+    string = Enum.split(rest, "")
+    value = Enum.join(string)
+    {{:string, value}, rest}
+  end
 
   @spec read_identifier(String.t(), iodata()) :: {Token.t(), String.t()}
   defp read_identifier(<<ch::8, rest::binary>>, acc) when is_letter(ch) do

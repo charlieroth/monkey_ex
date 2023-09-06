@@ -21,7 +21,7 @@ defmodule MonkeyEx do
 
       Logger.error(error_msgs)
     else
-      evaluated = Evaluator.eval(program, Environment.new())
+      {evaluated, _} = Evaluator.eval(program, Environment.new())
       evaluated.value
     end
   end

@@ -2,19 +2,13 @@
 
 The Monkey programming language from the book [Writing An Interpreter In Go](https://interpreterbook.com) by Thorsten Ball. Implemented in Elixir 🧙‍♂️.
 
-## Supported Functionality
-
-- `let`, `if`, `return` statements
-- functions
-- integers, booleans, string (wip)
-
 ## How To Use
 
 Start an `iex` shell and use the `MonkeyEx.run/1` function
 
 ## Examples
 
-### `let` statements
+### `let` Statements
 
 ```bash
 iex(1)> MonkeyEx.run("""
@@ -25,19 +19,31 @@ iex(1)> MonkeyEx.run("""
 15
 ```
 
-### functions
+### String Concatenation
+
+```bash
+iex(2)> MonkeyEx.run("""
+...(2)> let firstName = "Charlie";
+...(2)> let lastName = "Roth";
+...(2)> let fullName = firstName + \" \" + lastName;
+...(2)> fullName;
+...(2)> """)
+"Charlie Roth"
+```
+
+### Functions
 
 ```bash
 iex(1)> MonkeyEx.run("""
 ...(1)> let add = fn(x, y) {
-...(1)> return x + y;
+...(1)>   return x + y;
 ...(1)> }
 ...(1)> add(5, 10);
 ...(1)> """)
 15
 ```
 
-### `if/else` statement
+### `if/else` Statements
 
 ```bash
 iex(1)> MonkeyEx.run("""
@@ -56,7 +62,7 @@ iex(1)> MonkeyEx.run("""
 true
 ```
 
-### infix expressions
+### Infix Expressions
 
 ```bash
 iex(2)> MonkeyEx.run("""
@@ -72,4 +78,15 @@ iex(2)> MonkeyEx.run("""
 ...(2)> canDrive(ageInThreeYears(18));
 ...(2)> """)
 true
+```
+
+### Prefix Operators
+
+```bash
+iex(2)> MonkeyEx.run("""
+...(2)> let negTen = -10;
+...(2)> let one = 1;
+...(2)> one + negTen;
+...(2)> """)
+-9
 ```

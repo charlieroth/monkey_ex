@@ -793,5 +793,72 @@ defmodule ParserTest do
                }
              ] == program.statements
     end
+
+    test "parses function that returns a string" do
+      tokens = [
+        :let,
+        {:ident, "greeting"},
+        :assign,
+        :fn,
+        :lparen,
+        :rparen,
+        :lbrace,
+        :return,
+        {:string, "Hello, World!"},
+        :semicolon,
+        :rbrace,
+        {:ident, "greeting"},
+        :lparen,
+        :rparen,
+        :semicolon,
+        :eof
+      ]
+
+      {parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      assert parser.current_token == :eof
+      assert parser.peek_token == nil
+      assert length(program.statements) == 2
+
+      assert program.statements == [
+               %MonkeyEx.Ast.LetStatement{
+                 token: :let,
+                 name: %MonkeyEx.Ast.Identifier{
+                   token: {:ident, "greeting"},
+                   value: "greeting"
+                 },
+                 value: %MonkeyEx.Ast.FunctionLiteral{
+                   token: :fn,
+                   parameters: [],
+                   body: %MonkeyEx.Ast.BlockStatement{
+                     token: :lbrace,
+                     statements: [
+                       %MonkeyEx.Ast.ReturnStatement{
+                         token: :return,
+                         return_value: %MonkeyEx.Ast.StringLiteral{
+                           token: {:string, "Hello, World!"},
+                           value: "Hello, World!"
+                         }
+                       }
+                     ]
+                   }
+                 }
+               },
+               %MonkeyEx.Ast.ExpressionStatement{
+                 token: {:ident, "greeting"},
+                 expression: %MonkeyEx.Ast.CallExpression{
+                   token: :lparen,
+                   function: %MonkeyEx.Ast.Identifier{
+                     token: {:ident, "greeting"},
+                     value: "greeting"
+                   },
+                   arguments: []
+                 }
+               }
+             ]
+    end
   end
 end

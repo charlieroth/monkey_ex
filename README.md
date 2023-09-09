@@ -1,10 +1,19 @@
 # `MonkeyEx`
 
-The Monkey programming language from the book [Writing An Interpreter In Go](https://interpreterbook.com) by Thorsten Ball. Implemented in Elixir 🧙‍♂️.
+The Monkey programming language from the book [Writing An Interpreter In Go](https://interpreterbook.com) by Thorsten Ball; implemented in Elixir 🧙‍♂️.
 
 ## How To Use
 
-Start an `iex` shell and use the `MonkeyEx.run/1` function
+Start a `iex` shell
+
+```bash
+$ iex -S mix
+iex(1)> MonkeyEx.run(""" 
+...(1)> # Write program here 
+...(1)> """)
+```
+
+Use `MonkeyEx.run/1` to execute a program that is supported. See examples below for an idea of what is available.
 
 ## Examples
 

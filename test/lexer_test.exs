@@ -205,5 +205,28 @@ defmodule LexerTest do
                :eof
              ]
     end
+
+    test "tokenizes string" do
+      input = """
+      let x = "foo";
+      let y = "bar";
+      """
+
+      result = input |> Lexer.init()
+
+      assert result == [
+               :let,
+               {:ident, "x"},
+               :assign,
+               {:string, "foo"},
+               :semicolon,
+               :let,
+               {:ident, "y"},
+               :assign,
+               {:string, "bar"},
+               :semicolon,
+               :eof
+             ]
+    end
   end
 end

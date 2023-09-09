@@ -45,9 +45,10 @@ defmodule MonkeyEx.Lexer do
   defp tokenize(<<ch::8, rest::binary>>), do: {{:illegal, <<ch>>}, rest}
 
   defp read_string(rest) do
-    string = Enum.split(rest, "")
-    value = Enum.join(string)
-    {{:string, value}, rest}
+    {string, [_quote | rest]} =
+      Enum.split_while(String.split(rest, "", trim: true), &(!is_quote?(&1)))
+
+    {{:string, Enum.join(string, "")}, Enum.join(rest, "")}
   end
 
   @spec read_identifier(String.t(), iodata()) :: {Token.t(), String.t()}
@@ -79,4 +80,6 @@ defmodule MonkeyEx.Lexer do
   defp tokenize_word("false"), do: false
   defp tokenize_word("return"), do: :return
   defp tokenize_word(ident), do: {:ident, ident}
+
+  defp is_quote?(ch), do: ch == "\""
 end

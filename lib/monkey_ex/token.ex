@@ -35,6 +35,7 @@ defmodule MonkeyEx.Token do
   @spec literal(t()) :: String.t()
   def literal({:ident, identifier}), do: identifier
   def literal({:int, number}), do: number
+  def literal({:string, string}), do: string
   def literal(:assign), do: "="
   def literal(:plus), do: "+"
   def literal(:minus), do: "-"

@@ -755,5 +755,43 @@ defmodule ParserTest do
         assert Program.string(program) == expected_program_string
       end)
     end
+
+    test "parses strings" do
+      tokens = [
+        :let,
+        {:ident, "x"},
+        :assign,
+        {:string, "foo"},
+        :semicolon,
+        :let,
+        {:ident, "y"},
+        :assign,
+        {:string, "bar"},
+        :semicolon,
+        :eof
+      ]
+
+      {parser, program} =
+        tokens
+        |> Parser.init()
+        |> Parser.parse([])
+
+      assert parser.current_token == :eof
+      assert parser.peek_token == nil
+      assert length(program.statements) == 2
+
+      assert [
+               %MonkeyEx.Ast.LetStatement{
+                 token: :let,
+                 name: %MonkeyEx.Ast.Identifier{token: {:ident, "x"}, value: "x"},
+                 value: %MonkeyEx.Ast.StringLiteral{token: {:string, "foo"}, value: "foo"}
+               },
+               %MonkeyEx.Ast.LetStatement{
+                 token: :let,
+                 name: %MonkeyEx.Ast.Identifier{token: {:ident, "y"}, value: "y"},
+                 value: %MonkeyEx.Ast.StringLiteral{token: {:string, "bar"}, value: "bar"}
+               }
+             ] == program.statements
+    end
   end
 end

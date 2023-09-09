@@ -177,9 +177,9 @@ defmodule MonkeyEx.Evaluator do
     eval_integer_infix_expression(left, operator, right)
   end
 
-  # defp eval_infix_expression(%Object.String{} = left, operator, %Object.String{}) do
-  #   eval_string_infix_expression(left, operator, right)
-  # end
+  defp eval_infix_expression(%Object.String{} = left, operator, %Object.String{} = right) do
+    eval_string_infix_expression(left, operator, right)
+  end
 
   defp eval_infix_expression(left, "==", right),
     do: %Object.Boolean{value: left.value == right.value}
@@ -227,6 +227,18 @@ defmodule MonkeyEx.Evaluator do
       _ ->
         %Object.Error{
           message: "unknown operator: #{Object.type(left)}#{operator}#{Object.type(right)}"
+        }
+    end
+  end
+
+  defp eval_string_infix_expression(left, operator, right) do
+    case operator do
+      "+" ->
+        %Object.String{value: "#{left.value}#{right.value}"}
+
+      _ ->
+        %Object.Error{
+          message: "unknown operator: #{Object.type(left)} #{operator} #{Object.type(right)}"
         }
     end
   end

@@ -62,6 +62,10 @@ defmodule MonkeyEx.Evaluator do
     {%Object.Integer{value: ast_node.value}, env}
   end
 
+  def eval(%Ast.StringLiteral{} = ast_node, %Environment{} = env) do
+    {%Object.String{value: ast_node.value}, env}
+  end
+
   def eval(%Ast.BooleanLiteral{} = ast_node, %Environment{} = env) do
     {%Object.Boolean{value: ast_node.value}, env}
   end

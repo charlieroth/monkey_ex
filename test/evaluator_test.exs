@@ -22,6 +22,24 @@ defmodule EvaluatorTest do
       end)
     end
 
+    test "evaluate string literals" do
+      inputs = [
+        {"\"foo\"", %Object.String{value: "foo"}},
+        {"\"bar\"", %Object.String{value: "bar"}}
+      ]
+
+      Enum.each(inputs, fn {input, expected} ->
+        {_parser, program} =
+          input
+          |> Lexer.init()
+          |> Parser.init()
+          |> Parser.parse([])
+
+        {evaluated, _env} = Evaluator.eval(program, Environment.new())
+        assert evaluated == expected
+      end)
+    end
+
     test "evaluate booleans" do
       inputs = [
         {"true", %Object.Boolean{value: true}},
@@ -184,6 +202,7 @@ defmodule EvaluatorTest do
         {"return 10;", 10},
         {"return 10; 9;", 10},
         {"return 2 * 5; 9;", 10},
+        {"return \"hello\";", "hello"},
         {"9; return 2 * 5; 9;", 10},
         {"if (10 > 1) { if (10 > 1) { return 10; } return 1; }", 10}
       ]
@@ -203,6 +222,7 @@ defmodule EvaluatorTest do
     test "let statements" do
       inputs = [
         {"let a = 5; a;", 5},
+        {"let a = \"hello\"; a;", "hello"},
         {"let a = 5 * 5; a;", 25},
         {"let a = 5; let b = a; b;", 5},
         {"let a = 5; let b = a; let c = a + b + 5; c;", 15}
@@ -223,6 +243,7 @@ defmodule EvaluatorTest do
     test "evalutator error handling" do
       inputs = [
         {"5 + true;", "type mismatch: integer + boolean"},
+        {"5 + \"hello\";", "type mismatch: integer + string"},
         {"5 + true; 5;", "type mismatch: integer + boolean"},
         {"-true", "unknown operator: -boolean"},
         {"true + false", "unknown operator: boolean + boolean"},
@@ -249,6 +270,7 @@ defmodule EvaluatorTest do
       inputs = [
         {"let identity = fn(x) { x; }; identity(5);", 5},
         {"let identity = fn(x) { return x; }; identity(5);", 5},
+        {"let identity = fn(x) { return x; }; identity(\"hello\");", "hello"},
         {"let double = fn(x) { x * 2; }; double(5);", 10},
         {"let add = fn(x, y) { return x + y; }; add(5, 5);", 10},
         {"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
